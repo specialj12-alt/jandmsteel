@@ -1,0 +1,1338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>J&M Steel — Legacy Steel Services</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;900&family=Barlow:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --red:#c0392b;--red-dark:#922b21;--navy:#0d1b2a;--navy2:#16263a;
+    --navy3:#1e3050;--navy4:#253d5e;--steel:#8a9bb0;--text:#e8edf2;
+    --text-muted:#7a8fa3;--border:rgba(255,255,255,0.07);--amber:#e8a020;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Barlow',sans-serif;background:var(--navy);color:var(--text);min-height:100vh;}
+
+  /* LOGIN */
+  #loginScreen{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;
+    background-image:repeating-linear-gradient(0deg,transparent,transparent 39px,rgba(255,255,255,0.03) 39px,rgba(255,255,255,0.03) 40px),
+    repeating-linear-gradient(90deg,transparent,transparent 39px,rgba(255,255,255,0.03) 39px,rgba(255,255,255,0.03) 40px);}
+  .login-logo{text-align:center;}
+  .login-logo h1{font-family:'Barlow Condensed',sans-serif;font-size:3rem;font-weight:900;letter-spacing:4px;text-transform:uppercase;}
+  .login-logo h1 span{color:var(--red);}
+  .login-logo p{color:var(--text-muted);font-size:0.85rem;letter-spacing:2px;text-transform:uppercase;margin-top:2px;}
+  .login-divider{width:60px;height:3px;background:var(--red);margin:18px auto 28px;}
+  #userList{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-bottom:28px;max-width:480px;}
+  .userBtn{background:var(--navy2);border:1px solid var(--border);color:var(--text);padding:12px 22px;border-radius:4px;cursor:pointer;font-size:0.95rem;font-family:'Barlow',sans-serif;font-weight:500;transition:all 0.2s;position:relative;overflow:hidden;}
+  .userBtn::after{content:'';position:absolute;inset:0;background:var(--red);transform:scaleX(0);transform-origin:left;transition:transform 0.2s;z-index:0;}
+  .userBtn span{position:relative;z-index:1;}
+  .userBtn:hover::after,.userBtn.selected::after{transform:scaleX(1);}
+  .userBtn:hover,.userBtn.selected{border-color:var(--red);}
+  #pinArea{display:flex;flex-direction:column;align-items:center;gap:14px;}
+  #pinDisplay{font-family:'Barlow Condensed',sans-serif;font-size:2.4rem;letter-spacing:16px;color:var(--red);min-width:160px;text-align:center;font-weight:700;border-bottom:2px solid var(--navy4);padding-bottom:8px;}
+  .pinPad{display:grid;grid-template-columns:repeat(3,68px);gap:8px;}
+  .pinBtn{background:var(--navy2);border:1px solid var(--border);color:var(--text);width:68px;height:68px;border-radius:4px;font-size:1.4rem;font-family:'Barlow Condensed',sans-serif;font-weight:600;cursor:pointer;transition:all 0.15s;}
+  .pinBtn:hover{background:var(--red);border-color:var(--red);}
+  #pinError{color:var(--red);font-size:0.85rem;min-height:18px;}
+
+  /* APP */
+  #app{display:none;flex-direction:column;min-height:100vh;}
+  header{background:var(--navy2);padding:0 24px;display:flex;align-items:center;justify-content:space-between;border-bottom:2px solid var(--red);height:56px;position:sticky;top:0;z-index:50;}
+  .header-brand h1{font-family:'Barlow Condensed',sans-serif;font-size:1.45rem;font-weight:900;letter-spacing:3px;text-transform:uppercase;}
+  .header-brand h1 span{color:var(--red);}
+  .header-right{display:flex;align-items:center;gap:14px;}
+  #currentUser{font-size:0.8rem;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;}
+  #logoutBtn{background:transparent;border:1px solid var(--navy4);color:var(--text-muted);padding:5px 14px;border-radius:3px;cursor:pointer;font-size:0.8rem;font-family:'Barlow',sans-serif;transition:all 0.2s;}
+  #logoutBtn:hover{border-color:var(--red);color:var(--red);}
+  nav{background:var(--navy2);display:flex;gap:2px;padding:0 20px;border-bottom:1px solid var(--border);overflow-x:auto;}
+  nav button{background:transparent;border:none;color:var(--text-muted);padding:12px 18px;cursor:pointer;font-size:0.82rem;font-weight:600;font-family:'Barlow',sans-serif;letter-spacing:1px;text-transform:uppercase;transition:all 0.2s;border-bottom:2px solid transparent;white-space:nowrap;}
+  nav button.active,nav button:hover{color:var(--text);border-bottom-color:var(--red);}
+  main{flex:1;padding:24px;max-width:1200px;margin:0 auto;width:100%;}
+
+  /* CARDS */
+  .card{background:var(--navy2);border:1px solid var(--border);border-radius:6px;padding:20px;margin-bottom:20px;}
+  .card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid var(--border);}
+  .card-header h2{font-family:'Barlow Condensed',sans-serif;font-size:1rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--text-muted);}
+
+  /* TABLES */
+  .table-wrap{overflow-x:auto;}
+  table{width:100%;border-collapse:collapse;font-size:0.88rem;}
+  th{padding:10px 14px;text-align:left;color:var(--text-muted);font-weight:600;font-size:0.75rem;letter-spacing:1.5px;text-transform:uppercase;border-bottom:1px solid var(--border);}
+  td{padding:11px 14px;border-bottom:1px solid var(--border);vertical-align:middle;}
+  tr:last-child td{border-bottom:none;}
+  tr.hoverable:hover td{background:rgba(255,255,255,0.025);}
+  .badge{display:inline-block;padding:2px 9px;border-radius:2px;font-size:0.72rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;}
+  .badge-active{background:rgba(46,160,67,0.15);color:#4caf50;border:1px solid rgba(76,175,80,0.3);}
+  .badge-quote{background:rgba(100,181,246,0.12);color:#64b5f6;border:1px solid rgba(100,181,246,0.3);}
+  .badge-complete{background:rgba(232,160,32,0.12);color:var(--amber);border:1px solid rgba(232,160,32,0.3);}
+  .badge-on-hold{background:rgba(150,150,150,0.12);color:#aaa;border:1px solid rgba(150,150,150,0.3);}
+  .badge-owner{background:rgba(192,57,43,0.15);color:var(--red);border:1px solid rgba(192,57,43,0.3);}
+  .badge-manager{background:rgba(100,181,246,0.12);color:#64b5f6;border:1px solid rgba(100,181,246,0.3);}
+  .badge-office{background:rgba(149,117,205,0.15);color:#b39ddb;border:1px solid rgba(149,117,205,0.3);}
+  .badge-worker{background:rgba(232,160,32,0.12);color:var(--amber);border:1px solid rgba(232,160,32,0.3);}
+  .empty-state{text-align:center;color:var(--text-muted);padding:40px;font-size:0.9rem;letter-spacing:1px;}
+
+  /* STATS */
+  .stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:14px;margin-bottom:24px;}
+  .stat-card{background:var(--navy2);border:1px solid var(--border);border-radius:6px;padding:18px 20px;border-left:3px solid var(--red);}
+  .stat-card .num{font-family:'Barlow Condensed',sans-serif;font-size:2.2rem;font-weight:900;line-height:1;}
+  .stat-card .lbl{font-size:0.73rem;color:var(--text-muted);margin-top:5px;letter-spacing:1.5px;text-transform:uppercase;font-weight:600;}
+
+  /* BUTTONS */
+  .btn{padding:8px 18px;border-radius:3px;border:none;cursor:pointer;font-size:0.85rem;font-weight:600;font-family:'Barlow',sans-serif;letter-spacing:0.5px;transition:all 0.2s;}
+  .btn-primary{background:var(--red);color:#fff;}
+  .btn-primary:hover{background:var(--red-dark);}
+  .btn-secondary{background:var(--navy3);color:var(--text);border:1px solid var(--border);}
+  .btn-secondary:hover{background:var(--navy4);}
+  .btn-danger{background:transparent;color:var(--red);border:1px solid var(--red);}
+  .btn-danger:hover{background:var(--red);color:#fff;}
+  .btn-sm{padding:4px 12px;font-size:0.78rem;}
+  .btn-amber{background:var(--amber);color:var(--navy);}
+  .btn-amber:hover{background:#d4911c;}
+  .btn-ghost{background:transparent;color:var(--text-muted);border:1px solid var(--border);}
+  .btn-ghost:hover{color:var(--text);border-color:var(--text-muted);}
+  .btn-green{background:#2e7d32;color:#fff;border:none;}
+  .btn-green:hover{background:#1b5e20;}
+  .btn-blue{background:#1565c0;color:#fff;border:none;}
+  .btn-blue:hover{background:#0d47a1;}
+
+  /* FORMS */
+  .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+  .form-group{display:flex;flex-direction:column;gap:5px;}
+  .form-group.span2{grid-column:1/-1;}
+  .form-group label{font-size:0.75rem;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;font-weight:600;}
+  .form-group input,.form-group select,.form-group textarea{background:var(--navy);border:1px solid var(--border);color:var(--text);padding:9px 12px;border-radius:4px;font-size:0.9rem;font-family:'Barlow',sans-serif;transition:border-color 0.2s;}
+  .form-group textarea{resize:vertical;min-height:72px;}
+  .form-group input:focus,.form-group select:focus,.form-group textarea:focus{outline:none;border-color:var(--red);}
+  select option{background:var(--navy2);}
+  .form-actions{display:flex;gap:10px;margin-top:20px;align-items:center;flex-wrap:wrap;}
+  .form-actions .spacer{flex:1;}
+  .section-label{font-size:0.72rem;color:var(--text-muted);letter-spacing:2px;text-transform:uppercase;font-weight:700;margin:20px 0 10px;border-bottom:1px solid var(--border);padding-bottom:6px;}
+
+  /* MODAL */
+  .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:200;align-items:center;justify-content:center;}
+  .modal-overlay.open{display:flex;}
+  .modal{background:var(--navy2);border:1px solid var(--border);border-radius:6px;padding:28px;max-width:700px;width:95%;max-height:90vh;overflow-y:auto;}
+  .modal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:22px;}
+  .modal-header h3{font-family:'Barlow Condensed',sans-serif;font-size:1.2rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;}
+  .modal-close{background:none;border:none;color:var(--text-muted);font-size:1.4rem;cursor:pointer;line-height:1;padding:0 4px;}
+  .modal-close:hover{color:var(--text);}
+
+  /* TOP BAR */
+  .top-bar{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;flex-wrap:wrap;gap:12px;}
+  .top-bar h2{font-family:'Barlow Condensed',sans-serif;font-size:1.5rem;font-weight:900;letter-spacing:2px;text-transform:uppercase;}
+  .search-box{background:var(--navy2);border:1px solid var(--border);color:var(--text);padding:8px 14px;border-radius:4px;width:220px;font-family:'Barlow',sans-serif;font-size:0.88rem;}
+  .search-box:focus{outline:none;border-color:var(--red);}
+  .search-box::placeholder{color:var(--text-muted);}
+  .top-bar-right{display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+  .section{display:none;}
+  .section.active{display:block;}
+  .clocked-in{color:#4caf50;font-weight:600;}
+  .hours-cell{font-family:'Barlow Condensed',sans-serif;font-size:1rem;font-weight:700;}
+
+  /* PERMISSION BANNER */
+  .role-banner{background:var(--navy3);border:1px solid var(--border);border-radius:4px;padding:10px 16px;margin-bottom:16px;font-size:0.82rem;color:var(--text-muted);}
+  .role-banner strong{color:var(--text);}
+
+  /* JOB DETAIL / NOTES */
+  .job-row{cursor:pointer;}
+  .job-detail-row td{padding:0!important;background:var(--navy)!important;}
+  .job-detail-inner{padding:16px 14px 16px 42px;}
+  .expand-icon{display:inline-block;margin-right:8px;transition:transform 0.2s;color:var(--text-muted);font-size:0.75rem;}
+  .job-row.expanded .expand-icon{transform:rotate(90deg);}
+
+  /* NOTES & PHOTOS */
+  .notes-list{display:flex;flex-direction:column;gap:8px;margin-bottom:12px;}
+  .note-item{background:var(--navy2);border:1px solid var(--border);border-radius:4px;padding:10px 14px;}
+  .note-meta{font-size:0.75rem;color:var(--text-muted);margin-bottom:4px;}
+  .note-meta strong{color:var(--steel);}
+  .note-text{font-size:0.9rem;line-height:1.5;}
+  .note-photo{margin-top:8px;}
+  .note-photo img{max-width:200px;max-height:160px;border-radius:4px;border:1px solid var(--border);cursor:pointer;}
+  .photos-grid{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;}
+  .photo-thumb{position:relative;}
+  .photo-thumb img{width:80px;height:80px;object-fit:cover;border-radius:4px;border:1px solid var(--border);cursor:pointer;}
+
+  /* ADD NOTE INLINE */
+  .add-note-area{background:var(--navy3);border:1px solid var(--border);border-radius:4px;padding:12px;}
+  .add-note-area textarea{width:100%;background:var(--navy);border:1px solid var(--border);color:var(--text);padding:8px 10px;border-radius:4px;font-family:'Barlow',sans-serif;font-size:0.88rem;resize:vertical;min-height:56px;margin-bottom:8px;}
+  .add-note-area textarea:focus{outline:none;border-color:var(--red);}
+  .add-note-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+  .file-label{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:3px;background:var(--navy4);border:1px solid var(--border);color:var(--text-muted);cursor:pointer;font-size:0.8rem;font-weight:600;transition:all 0.2s;}
+  .file-label:hover{color:var(--text);border-color:var(--text-muted);}
+  .file-label input{display:none;}
+  .file-chosen{font-size:0.78rem;color:var(--steel);}
+
+  /* COMPANY ROWS */
+  .company-row{cursor:pointer;user-select:none;}
+  .company-row:hover td{background:rgba(255,255,255,0.025);}
+  .contacts-row td{padding:0!important;background:var(--navy)!important;}
+  .contacts-inner{padding:10px 14px 14px 42px;}
+  .contacts-inner-header{display:flex;align-items:center;justify-content:space-between;padding-bottom:8px;}
+  .contacts-inner-header span{font-size:0.72rem;color:var(--text-muted);letter-spacing:1.5px;text-transform:uppercase;font-weight:600;}
+  .contact-list{display:flex;flex-direction:column;gap:6px;}
+  .contact-item{display:flex;align-items:center;gap:12px;padding:8px 12px;background:var(--navy2);border-radius:4px;border:1px solid var(--border);flex-wrap:wrap;}
+  .contact-name{font-weight:600;min-width:130px;}
+  .contact-title{color:var(--text-muted);font-size:0.83rem;min-width:100px;}
+  .contact-detail{color:var(--steel);font-size:0.83rem;flex:1;}
+  .contact-detail a{color:#64b5f6;text-decoration:none;}
+  .contact-detail a:hover{text-decoration:underline;}
+  .no-contacts{color:var(--text-muted);font-size:0.85rem;font-style:italic;padding:4px 0;}
+  .contact-edit-row{display:grid;grid-template-columns:1.2fr 1fr 1.4fr 1fr auto;gap:8px;margin-bottom:8px;align-items:center;}
+  .contact-edit-row input{background:var(--navy);border:1px solid var(--border);color:var(--text);padding:7px 10px;border-radius:4px;font-family:'Barlow',sans-serif;font-size:0.85rem;width:100%;}
+  .contact-edit-row input:focus{outline:none;border-color:var(--red);}
+
+  /* PROCESS CHIPS */
+  .process-grid{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px;}
+  .process-chip{padding:8px 16px;border-radius:4px;background:var(--navy3);border:2px solid var(--border);color:var(--text);cursor:pointer;font-family:'Barlow',sans-serif;font-size:0.88rem;font-weight:600;transition:all 0.15s;user-select:none;}
+  .process-chip:hover{border-color:var(--steel);}
+  .process-chip.selected{background:var(--red);border-color:var(--red);color:#fff;}
+
+  /* PROCESS MANAGE */
+  .process-item{display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--navy);border-radius:4px;border:1px solid var(--border);margin-bottom:6px;}
+  .process-item span{flex:1;font-weight:500;}
+
+  /* REPORT FILTERS */
+  .report-filters{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-bottom:18px;padding:16px;background:var(--navy2);border:1px solid var(--border);border-radius:6px;}
+  .report-filters .form-group{min-width:160px;}
+  .report-filters label{font-size:0.72rem;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;font-weight:600;margin-bottom:4px;display:block;}
+  .report-filters select,.report-filters input{background:var(--navy);border:1px solid var(--border);color:var(--text);padding:8px 12px;border-radius:4px;font-family:'Barlow',sans-serif;font-size:0.88rem;width:100%;}
+
+  /* LIGHTBOX */
+  #lightbox{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:500;align-items:center;justify-content:center;cursor:zoom-out;}
+  #lightbox.open{display:flex;}
+  #lightbox img{max-width:90vw;max-height:90vh;border-radius:6px;}
+
+  @media(max-width:640px){
+    .form-grid{grid-template-columns:1fr;}
+    .form-group.span2{grid-column:1;}
+    main{padding:14px;}
+    .contact-edit-row{grid-template-columns:1fr 1fr;}
+  }
+</style>
+</head>
+<body>
+
+<!-- LIGHTBOX -->
+<div id="lightbox" onclick="closeLightbox()"><img id="lightboxImg" src=""></div>
+
+<!-- LOGIN -->
+<div id="loginScreen">
+  <div class="login-logo">
+    <div style="position:relative;display:inline-block;margin-bottom:4px;">
+      <!-- Steel plate background -->
+      <svg viewBox="0 0 380 110" xmlns="http://www.w3.org/2000/svg" style="width:360px;display:block;">
+        <defs>
+          <!-- Steel plate brushed metal gradient -->
+          <linearGradient id="plate" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%"   stop-color="#4a5a62"/>
+            <stop offset="18%"  stop-color="#5e7078"/>
+            <stop offset="35%"  stop-color="#6a8090"/>
+            <stop offset="50%"  stop-color="#607880"/>
+            <stop offset="65%"  stop-color="#526068"/>
+            <stop offset="82%"  stop-color="#3e4e56"/>
+            <stop offset="100%" stop-color="#344048"/>
+          </linearGradient>
+          <!-- Subtle noise/grain overlay -->
+          <linearGradient id="grain" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%"   stop-color="#ffffff" stop-opacity="0.04"/>
+            <stop offset="20%"  stop-color="#000000" stop-opacity="0.03"/>
+            <stop offset="40%"  stop-color="#ffffff" stop-opacity="0.05"/>
+            <stop offset="60%"  stop-color="#000000" stop-opacity="0.02"/>
+            <stop offset="80%"  stop-color="#ffffff" stop-opacity="0.04"/>
+            <stop offset="100%" stop-color="#000000" stop-opacity="0.03"/>
+          </linearGradient>
+          <!-- Plasma cut glow — orange/yellow burn edge -->
+          <filter id="plasmaglow" x="-8%" y="-8%" width="116%" height="116%">
+            <feGaussianBlur stdDeviation="2.2" result="blur"/>
+            <feFlood flood-color="#ff8c00" flood-opacity="0.85" result="color"/>
+            <feComposite in="color" in2="blur" operator="in" result="glow"/>
+            <feMerge><feMergeNode in="glow"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+          <!-- Inner shadow for cutout depth -->
+          <filter id="cutdepth" x="-5%" y="-5%" width="110%" height="110%">
+            <feDropShadow dx="1.5" dy="1.5" stdDeviation="1.5" flood-color="#000000" flood-opacity="0.7"/>
+          </filter>
+          <!-- Plate edge shadow -->
+          <filter id="plateshadow">
+            <feDropShadow dx="3" dy="4" stdDeviation="5" flood-color="#000000" flood-opacity="0.55"/>
+          </filter>
+          <!-- Clip to plate shape -->
+          <clipPath id="plateclip">
+            <rect x="0" y="0" width="380" height="110" rx="3"/>
+          </clipPath>
+        </defs>
+
+        <!-- Plate body -->
+        <rect x="0" y="0" width="380" height="110" rx="3" fill="url(#plate)" filter="url(#plateshadow)"/>
+        <!-- Brushed grain overlay -->
+        <rect x="0" y="0" width="380" height="110" rx="3" fill="url(#grain)"/>
+        <!-- Plate top highlight -->
+        <rect x="0" y="0" width="380" height="18" rx="3" fill="white" opacity="0.06"/>
+        <!-- Plate bottom shadow -->
+        <rect x="0" y="88" width="380" height="22" rx="3" fill="black" opacity="0.12"/>
+
+        <!-- ═══ PLASMA CUT TEXT — "J&M STEEL" ═══ -->
+        <!-- Dark cutout layer — the hole through the plate -->
+        <text x="190" y="74" text-anchor="middle"
+          font-family="'Barlow Condensed', sans-serif"
+          font-weight="900" font-size="72" letter-spacing="4"
+          fill="#0d1b2a"
+          filter="url(#cutdepth)"
+          clip-path="url(#plateclip)">J&amp;M STEEL</text>
+
+        <!-- Plasma burn glow around cut edges -->
+        <text x="190" y="74" text-anchor="middle"
+          font-family="'Barlow Condensed', sans-serif"
+          font-weight="900" font-size="72" letter-spacing="4"
+          fill="none"
+          stroke="#ff7700" stroke-width="3"
+          filter="url(#plasmaglow)"
+          opacity="0.6"
+          clip-path="url(#plateclip)">J&amp;M STEEL</text>
+
+        <!-- Thin bright inner edge of cut — molten line -->
+        <text x="190" y="74" text-anchor="middle"
+          font-family="'Barlow Condensed', sans-serif"
+          font-weight="900" font-size="72" letter-spacing="4"
+          fill="none"
+          stroke="#ffcc44" stroke-width="0.8"
+          opacity="0.5"
+          clip-path="url(#plateclip)">J&amp;M STEEL</text>
+      </svg>
+    </div>
+    <p style="color:var(--text-muted);font-size:0.72rem;letter-spacing:2px;text-transform:uppercase;margin-top:10px">Powered by <span style="color:var(--text)">Legacy Steel Services</span></p>
+  </div>
+  <div class="login-divider"></div>
+  <div id="userList"><p style="color:var(--text-muted);font-size:0.85rem;">Loading team…</p></div>
+  <div id="pinArea" style="display:none">
+    <div id="pinDisplay">_____</div>
+    <div class="pinPad">
+      <button class="pinBtn" onclick="pinPress('1')">1</button><button class="pinBtn" onclick="pinPress('2')">2</button><button class="pinBtn" onclick="pinPress('3')">3</button>
+      <button class="pinBtn" onclick="pinPress('4')">4</button><button class="pinBtn" onclick="pinPress('5')">5</button><button class="pinBtn" onclick="pinPress('6')">6</button>
+      <button class="pinBtn" onclick="pinPress('7')">7</button><button class="pinBtn" onclick="pinPress('8')">8</button><button class="pinBtn" onclick="pinPress('9')">9</button>
+      <button class="pinBtn" onclick="pinClear()">✕</button><button class="pinBtn" onclick="pinPress('0')">0</button><button class="pinBtn" onclick="pinBack()">⌫</button>
+    </div>
+    <button onclick="verifyPin()" style="margin-top:6px;width:214px;padding:13px;background:var(--red);border:none;border-radius:4px;color:#fff;font-family:'Barlow Condensed',sans-serif;font-size:1.1rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;cursor:pointer;transition:background 0.2s;" onmouseover="this.style.background='#a93226'" onmouseout="this.style.background='var(--red)'">Login</button>
+    <div id="pinError"></div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <header>
+    <div class="header-brand"><h1>J<span>&</span>M STEEL</h1></div>
+    <div class="header-right"><span id="currentUser"></span><button id="logoutBtn" onclick="logout()">Logout</button></div>
+  </header>
+  <nav>
+    <button class="active" onclick="showSection('dashboard',this)">Dashboard</button>
+    <button onclick="showSection('jobs',this)">Jobs</button>
+    <button onclick="showSection('quotes',this)" id="navQuotes">Quotes</button>
+    <button onclick="showSection('customers',this)" id="navCustomers">Customers</button>
+    <button onclick="showSection('timesheet',this)">Timesheets</button>
+    <button onclick="showSection('reports',this)" id="navReports">Reports</button>
+    <button onclick="showSection('team',this)" id="navTeam">Team</button>
+  </nav>
+  <main>
+
+    <!-- DASHBOARD -->
+    <div class="section active" id="sec-dashboard">
+      <div class="stat-grid" id="statGrid"></div>
+      <div class="card"><div class="card-header"><h2>Recent Jobs</h2></div><div class="table-wrap" id="recentJobs"></div></div>
+      <div class="card"><div class="card-header"><h2>Currently Clocked In</h2></div><div class="table-wrap" id="clockedInNow"></div></div>
+    </div>
+
+    <!-- JOBS -->
+    <div class="section" id="sec-jobs">
+      <div class="top-bar"><h2>Jobs</h2>
+        <div class="top-bar-right">
+          <input class="search-box" placeholder="Search jobs…" oninput="filterJobs(this.value)">
+          <button class="btn btn-primary" id="btnNewJob" onclick="openJobModal(false)">+ New Job</button>
+        </div>
+      </div>
+      <div id="jobsRoleBanner"></div>
+      <div class="card"><div class="table-wrap"><table>
+        <thead><tr><th></th><th>Job #</th><th>Name</th><th>Company</th><th>Contact</th><th>Project Mgr</th><th>Due Date</th><th>Status</th><th id="jobEditCol"></th></tr></thead>
+        <tbody id="jobsTable"></tbody>
+      </table></div></div>
+    </div>
+
+    <!-- QUOTES -->
+    <div class="section" id="sec-quotes">
+      <div class="top-bar"><h2>Quotes</h2><button class="btn btn-primary" onclick="openJobModal(true)">+ New Quote</button></div>
+      <div class="card"><div class="table-wrap"><table>
+        <thead><tr><th>Quote #</th><th>Name</th><th>Company</th><th>Contact</th><th>Project Mgr</th><th>Amount</th><th>Status</th><th></th></tr></thead>
+        <tbody id="quotesTable"></tbody>
+      </table></div></div>
+    </div>
+
+    <!-- CUSTOMERS -->
+    <div class="section" id="sec-customers">
+      <div class="top-bar"><h2>Customers</h2>
+        <div class="top-bar-right">
+          <input class="search-box" placeholder="Search companies…" oninput="filterCustomers(this.value)">
+          <button class="btn btn-primary" onclick="openCompanyModal()">+ New Company</button>
+        </div>
+      </div>
+      <div class="card"><div class="table-wrap"><table>
+        <thead><tr><th>Company</th><th>Phone</th><th>Email</th><th>Address</th><th>Contacts</th><th></th></tr></thead>
+        <tbody id="custTable"></tbody>
+      </table></div></div>
+    </div>
+
+    <!-- TIMESHEETS -->
+    <div class="section" id="sec-timesheet">
+      <div class="top-bar"><h2>Timesheets</h2>
+        <div class="top-bar-right">
+          <select id="timeFilterUser" class="search-box" style="width:160px" onchange="renderTime()"><option value="">All Employees</option></select>
+          <button class="btn btn-primary" onclick="openClockModal()">Clock In / Out</button>
+        </div>
+      </div>
+      <div class="card"><div class="table-wrap"><table>
+        <thead><tr><th>Employee</th><th>Job</th><th>Process</th><th>Clock In</th><th>Clock Out</th><th>Hours</th><th>Note</th><th id="approveColHead">Approve</th><th id="timeEditColHead"></th></tr></thead>
+        <tbody id="timeTable"></tbody>
+      </table></div></div>
+    </div>
+
+    <!-- REPORTS -->
+    <div class="section" id="sec-reports">
+      <div class="top-bar"><h2>Reports</h2></div>
+      <div class="card">
+        <div class="card-header"><h2>Timesheet Report</h2></div>
+        <div class="report-filters">
+          <div class="form-group"><label>Date From</label><input type="date" id="rDateFrom"></div>
+          <div class="form-group"><label>Date To</label><input type="date" id="rDateTo"></div>
+          <div class="form-group"><label>Employee</label><select id="rEmployee"><option value="">All Employees</option></select></div>
+          <div class="form-group"><label>Job</label><select id="rJob"><option value="">All Jobs</option></select></div>
+          <div class="form-group"><label>Process</label><select id="rProcess"><option value="">All Processes</option></select></div>
+          <div style="display:flex;gap:8px;align-items:flex-end;padding-bottom:1px">
+            <button class="btn btn-secondary" onclick="previewTimesheetReport()">Preview</button>
+            <button class="btn btn-green" onclick="exportTimesheetReport()">⬇ Export Excel</button>
+          </div>
+        </div>
+        <div class="table-wrap" id="timesheetReportPreview"></div>
+      </div>
+      <div class="card">
+        <div class="card-header"><h2>Jobs Report</h2></div>
+        <div class="report-filters">
+          <div class="form-group"><label>Status</label>
+            <select id="rJobStatus"><option value="">All</option><option value="active">Active</option><option value="quote">Quote</option><option value="complete">Complete</option><option value="on hold">On Hold</option></select>
+          </div>
+          <div class="form-group"><label>Company</label><select id="rJobCompany"><option value="">All Companies</option></select></div>
+          <div style="display:flex;gap:8px;align-items:flex-end;padding-bottom:1px">
+            <button class="btn btn-secondary" onclick="previewJobsReport()">Preview</button>
+            <button class="btn btn-green" onclick="exportJobsReport()">⬇ Export Jobs</button>
+            <button class="btn btn-green" onclick="exportJobNotesReport()">⬇ Export Notes</button>
+          </div>
+        </div>
+        <div class="table-wrap" id="jobsReportPreview"></div>
+      </div>
+      <div class="card">
+        <div class="card-header"><h2>Customer / Contact Directory</h2></div>
+        <div class="report-filters">
+          <div style="display:flex;gap:8px;align-items:flex-end;padding-bottom:1px">
+            <button class="btn btn-secondary" onclick="previewCustomersReport()">Preview</button>
+            <button class="btn btn-green" onclick="exportCustomersReport()">⬇ Export Excel</button>
+          </div>
+        </div>
+        <div class="table-wrap" id="customersReportPreview"></div>
+      </div>
+      <div class="card">
+        <div class="card-header"><h2>Hours by Process</h2></div>
+        <div class="report-filters">
+          <div class="form-group"><label>Date From</label><input type="date" id="rpDateFrom"></div>
+          <div class="form-group"><label>Date To</label><input type="date" id="rpDateTo"></div>
+          <div class="form-group"><label>Job</label><select id="rpJob"><option value="">All Jobs</option></select></div>
+          <div style="display:flex;gap:8px;align-items:flex-end;padding-bottom:1px">
+            <button class="btn btn-secondary" onclick="previewProcessReport()">Preview</button>
+            <button class="btn btn-green" onclick="exportProcessReport()">⬇ Export Excel</button>
+          </div>
+        </div>
+        <div class="table-wrap" id="processReportPreview"></div>
+      </div>
+    </div>
+
+    <!-- TEAM -->
+    <div class="section" id="sec-team">
+      <div class="top-bar"><h2>Team Members</h2><button class="btn btn-primary" onclick="openUserModal()">+ Add Member</button></div>
+      <div class="card"><div class="table-wrap"><table>
+        <thead><tr><th>Name</th><th>Role</th><th></th></tr></thead>
+        <tbody id="teamTable"></tbody>
+      </table></div></div>
+      <div class="card">
+        <div class="card-header"><h2>Manage Processes</h2><button class="btn btn-primary btn-sm" onclick="openAddProcessModal()">+ Add Process</button></div>
+        <div id="processList"></div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- JOB MODAL -->
+<div class="modal-overlay" id="jobModal">
+  <div class="modal">
+    <div class="modal-header"><h3 id="jobModalTitle">New Job</h3><button class="modal-close" onclick="closeModal('jobModal')">×</button></div>
+    <div class="form-grid">
+      <div class="form-group"><label>Job Number</label><input id="jNum" placeholder="e.g. 2025-001"></div>
+      <div class="form-group"><label>Job Name</label><input id="jName" placeholder="Project name"></div>
+      <div class="form-group"><label>Company (Bills To)</label><select id="jCompany" onchange="onJobCompanyChange()"><option value="">— Select Company —</option></select></div>
+      <div class="form-group"><label>Job Contact</label><select id="jContact"><option value="">— Select Company First —</option></select></div>
+      <div class="form-group"><label>Project Manager</label><input id="jPM" placeholder="Name"></div>
+      <div class="form-group"><label>Status</label>
+        <select id="jStatus"><option value="active">Active</option><option value="quote">Quote</option><option value="complete">Complete</option><option value="on hold">On Hold</option></select>
+      </div>
+      <div class="form-group"><label>Due Date</label><input type="date" id="jDue"></div>
+      <div class="form-group"><label>Quote / Contract Amount ($)</label><input type="number" id="jAmount" placeholder="0.00"></div>
+      <div class="form-group span2"><label>Description / Notes</label><textarea id="jDesc" rows="3"></textarea></div>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-primary" onclick="saveJob()">Save</button>
+      <button class="btn btn-secondary" onclick="closeModal('jobModal')">Cancel</button>
+      <div class="spacer"></div>
+      <button class="btn btn-danger" id="deleteJobBtn" style="display:none" onclick="deleteJob()">Delete</button>
+    </div>
+  </div>
+</div>
+
+<!-- JOB NOTES/PHOTOS MODAL -->
+<div class="modal-overlay" id="jobNotesModal">
+  <div class="modal" style="max-width:760px">
+    <div class="modal-header"><h3 id="jobNotesTitle">Job Notes & Photos</h3><button class="modal-close" onclick="closeModal('jobNotesModal')">×</button></div>
+    <div id="jobNotesList" style="margin-bottom:16px"></div>
+    <div class="add-note-area">
+      <div style="font-size:0.75rem;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;font-weight:600;margin-bottom:8px;">Add Note / Photo</div>
+      <textarea id="noteText" placeholder="Type a note…"></textarea>
+      <div class="add-note-actions">
+        <button class="btn btn-primary btn-sm" onclick="submitNote()">Add Note</button>
+        <label class="file-label">
+          📎 Attach Photo
+          <input type="file" id="notePhoto" accept="image/*" onchange="photoChosen(this)">
+        </label>
+        <span class="file-chosen" id="photoChosen"></span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- COMPANY MODAL -->
+<div class="modal-overlay" id="companyModal">
+  <div class="modal">
+    <div class="modal-header"><h3 id="companyModalTitle">New Company</h3><button class="modal-close" onclick="closeModal('companyModal')">×</button></div>
+    <div class="section-label" style="margin-top:0">Company Info</div>
+    <div class="form-grid">
+      <div class="form-group span2"><label>Company Name *</label><input id="coName" placeholder="e.g. Acme Steel Works"></div>
+      <div class="form-group"><label>Main Phone</label><input id="coPhone" placeholder="(555) 555-5555"></div>
+      <div class="form-group"><label>Main Email</label><input type="email" id="coEmail" placeholder="info@company.com"></div>
+      <div class="form-group span2"><label>Address</label><input id="coAddress" placeholder="Street, City, State, ZIP"></div>
+      <div class="form-group span2"><label>Notes</label><textarea id="coNotes" rows="2"></textarea></div>
+    </div>
+    <div class="section-label" style="margin-top:24px">Contacts &nbsp;<span style="font-weight:400;color:var(--text-muted);letter-spacing:0;text-transform:none;font-size:0.8rem">— purchasing agents, project leads, etc.</span></div>
+    <div style="display:grid;grid-template-columns:1.2fr 1fr 1.4fr 1fr 32px;gap:8px;margin-bottom:6px;padding:0 2px">
+      <span style="font-size:0.7rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;font-weight:600">Name</span>
+      <span style="font-size:0.7rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;font-weight:600">Title</span>
+      <span style="font-size:0.7rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;font-weight:600">Email</span>
+      <span style="font-size:0.7rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;font-weight:600">Phone</span>
+      <span></span>
+    </div>
+    <div id="contactsEditList"></div>
+    <button class="btn btn-ghost btn-sm" style="margin-top:8px" onclick="addContactRow()">+ Add Contact</button>
+    <div class="form-actions">
+      <button class="btn btn-primary" onclick="saveCompany()">Save</button>
+      <button class="btn btn-secondary" onclick="closeModal('companyModal')">Cancel</button>
+      <div class="spacer"></div>
+      <button class="btn btn-danger" id="deleteCompanyBtn" style="display:none" onclick="deleteCompany()">Delete Company</button>
+    </div>
+  </div>
+</div>
+
+<!-- CLOCK MODAL -->
+<div class="modal-overlay" id="clockModal">
+  <div class="modal">
+    <div class="modal-header"><h3>Clock In / Out</h3><button class="modal-close" onclick="closeModal('clockModal')">×</button></div>
+    <div class="form-grid">
+      <div class="form-group"><label>Employee</label><select id="clockUser"></select></div>
+      <div class="form-group"><label>Job</label><select id="clockJob"></select></div>
+    </div>
+    <div class="form-group" style="margin-top:14px"><label>Process</label><div class="process-grid" id="processChips"></div><input type="hidden" id="clockProcessId"><input type="hidden" id="clockProcessName"></div>
+    <div class="form-group" style="margin-top:14px"><label>Note (optional)</label><input id="clockNote" placeholder="Any additional notes…"></div>
+    <div class="form-actions">
+      <button class="btn btn-primary" onclick="clockIn()">Clock In</button>
+      <button class="btn btn-amber" onclick="clockOut()">Clock Out</button>
+      <button class="btn btn-secondary" onclick="closeModal('clockModal')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- PROCESS MODAL -->
+<div class="modal-overlay" id="processModal">
+  <div class="modal" style="max-width:400px">
+    <div class="modal-header"><h3 id="processModalTitle">Add Process</h3><button class="modal-close" onclick="closeModal('processModal')">×</button></div>
+    <div class="form-group"><label>Process Name *</label><input id="pName" placeholder="e.g. Drill Press"></div>
+    <div class="form-actions">
+      <button class="btn btn-primary" onclick="saveProcess()">Save</button>
+      <button class="btn btn-secondary" onclick="closeModal('processModal')">Cancel</button>
+      <div class="spacer"></div>
+      <button class="btn btn-danger" id="deleteProcessBtn" style="display:none" onclick="deleteProcess()">Delete</button>
+    </div>
+  </div>
+</div>
+
+<!-- TIME ENTRY EDIT MODAL -->
+<div class="modal-overlay" id="timeEditModal">
+  <div class="modal" style="max-width:520px">
+    <div class="modal-header"><h3>Edit Time Entry</h3><button class="modal-close" onclick="closeModal('timeEditModal')">×</button></div>
+    <div class="form-grid">
+      <div class="form-group"><label>Employee</label><select id="teUser"></select></div>
+      <div class="form-group"><label>Job</label><select id="teJob"></select></div>
+      <div class="form-group"><label>Process</label><select id="teProcess"></select></div>
+      <div class="form-group"><label>Clock In</label><input type="datetime-local" id="teClockIn"></div>
+      <div class="form-group"><label>Clock Out <span style="font-weight:400;color:var(--text-muted)">(leave blank if active)</span></label><input type="datetime-local" id="teClockOut"></div>
+      <div class="form-group"><label>Note</label><input id="teNote" placeholder="Optional note"></div>
+      <div class="form-group"><label>Approved</label>
+        <select id="teApproved"><option value="false">No</option><option value="true">Yes</option></select>
+      </div>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-primary" onclick="saveTimeEntry()">Save</button>
+      <button class="btn btn-secondary" onclick="closeModal('timeEditModal')">Cancel</button>
+      <div class="spacer"></div>
+      <button class="btn btn-danger" onclick="deleteTimeEntry()">Delete Entry</button>
+    </div>
+  </div>
+</div>
+
+<!-- USER MODAL -->
+<div class="modal-overlay" id="userModal">
+  <div class="modal">
+    <div class="modal-header"><h3 id="userModalTitle">Add Team Member</h3><button class="modal-close" onclick="closeModal('userModal')">×</button></div>
+    <div class="form-grid">
+      <div class="form-group"><label>Name *</label><input id="uName" placeholder="Full name"></div>
+      <div class="form-group"><label>Role</label>
+        <select id="uRole"><option value="worker">Worker</option><option value="office">Office</option><option value="manager">Manager</option><option value="owner">Owner</option></select>
+      </div>
+      <div class="form-group"><label>PIN (5 digits)</label><input id="uPin" placeholder="12345" maxlength="5" type="tel"></div>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-primary" onclick="saveUser()">Save</button>
+      <button class="btn btn-secondary" onclick="closeModal('userModal')">Cancel</button>
+      <div class="spacer"></div>
+      <button class="btn btn-danger" id="deleteUserBtn" style="display:none" onclick="deleteUser()">Remove</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const SUPABASE_URL='https://pmoxtjyrpglaysrdmpvk.supabase.co';
+const SUPABASE_KEY='sb_publishable_rtdKnLGr2bod1u_zj_jkHA_9aQJqG7w';
+
+const api=async(table,opts={})=>{
+  const{method='GET',filter='',body,select='*'}=opts;
+  const url=`${SUPABASE_URL}/rest/v1/${table}?select=${select}${filter}`;
+  const res=await fetch(url,{method,headers:{'apikey':SUPABASE_KEY,'Authorization':`Bearer ${SUPABASE_KEY}`,'Content-Type':'application/json','Prefer':(method==='POST'||method==='PATCH')?'return=representation':''},body:body?JSON.stringify(body):undefined});
+  if(!res.ok){const e=await res.text();throw new Error(e);}
+  const t=await res.text();return t?JSON.parse(t):[];
+};
+const patch=async(table,id,body)=>{
+  const res=await fetch(`${SUPABASE_URL}/rest/v1/${table}?id=eq.${id}`,{method:'PATCH',headers:{'apikey':SUPABASE_KEY,'Authorization':`Bearer ${SUPABASE_KEY}`,'Content-Type':'application/json','Prefer':'return=representation'},body:JSON.stringify(body)});
+  if(!res.ok)throw new Error(await res.text());
+};
+const del=async(table,id)=>{await fetch(`${SUPABASE_URL}/rest/v1/${table}?id=eq.${id}`,{method:'DELETE',headers:{'apikey':SUPABASE_KEY,'Authorization':`Bearer ${SUPABASE_KEY}`}});};
+
+// STATE
+let currentUser=null,selectedUserId=null,pinEntered='';
+let allJobs=[],allCompanies=[],allContacts=[],allUsers=[],allTime=[],allProcesses=[],allJobNotes=[];
+let editingJobId=null,editingCompanyId=null,editingUserId=null,editingProcessId=null;
+let currentNotesJobId=null;
+let pendingContacts=[];
+
+// PERMISSION HELPERS
+const isOwner=()=>currentUser?.role==='owner';
+const isManager=()=>currentUser?.role==='manager';
+const isOffice=()=>currentUser?.role==='office';
+const isWorker=()=>currentUser?.role==='worker';
+const canEdit=()=>isOwner()||isManager()||isOffice(); // add/edit jobs, customers, reports
+const canAdmin=()=>isOwner();                          // team management only
+
+// ── LOGIN ──────────────────────────────────────
+async function loadUsers(){
+  try{
+    allUsers=await api('users',{filter:'&order=name'});
+    const list=document.getElementById('userList');
+    if(!allUsers.length){list.innerHTML='<p style="color:var(--text-muted)">No users found.</p>';return;}
+    list.innerHTML='';
+    allUsers.forEach(u=>{const btn=document.createElement('button');btn.className='userBtn';btn.innerHTML=`<span>${u.name}</span>`;btn.onclick=()=>selectUser(u);list.appendChild(btn);});
+  }catch(e){document.getElementById('userList').innerHTML=`<p style="color:var(--red)">Load error: ${e.message}</p>`;}
+}
+function selectUser(u){selectedUserId=u.id;document.querySelectorAll('.userBtn').forEach(b=>b.classList.toggle('selected',b.querySelector('span').textContent===u.name));document.getElementById('pinArea').style.display='flex';pinEntered='';updatePinDisplay();document.getElementById('pinError').textContent='';}
+function updatePinDisplay(){const l=pinEntered.length;document.getElementById('pinDisplay').textContent='●'.repeat(l)+'_'.repeat(5-l);}
+function pinPress(d){if(pinEntered.length>=5)return;pinEntered+=d;updatePinDisplay();if(pinEntered.length===5)verifyPin();}
+function pinBack(){pinEntered=pinEntered.slice(0,-1);updatePinDisplay();}
+function pinClear(){pinEntered='';updatePinDisplay();}
+async function verifyPin(){
+  const u=allUsers.find(x=>x.id===selectedUserId);if(!u)return;
+  if(!pinEntered){document.getElementById('pinError').textContent='Please enter your PIN.';return;}
+  if(String(pinEntered)===String(u.pin)){currentUser=u;enterApp();}
+  else{document.getElementById('pinError').textContent='Incorrect PIN — try again.';setTimeout(()=>{pinEntered='';updatePinDisplay();document.getElementById('pinError').textContent='';},1200);}
+}
+function enterApp(){
+  document.getElementById('loginScreen').style.display='none';
+  document.getElementById('app').style.display='flex';
+  document.getElementById('currentUser').textContent=`${currentUser.name} · ${currentUser.role.toUpperCase()}`;
+  applyNavPermissions();
+  loadAll();
+}
+function applyNavPermissions(){
+  // Workers: hide Quotes, Customers, Reports nav
+  document.getElementById('navQuotes').style.display=canEdit()?'':'none';
+  document.getElementById('navCustomers').style.display=canEdit()?'':'none';
+  document.getElementById('navReports').style.display=canEdit()?'':'none';
+  document.getElementById('navTeam').style.display=canAdmin()?'':'none';
+}
+function logout(){currentUser=null;selectedUserId=null;pinEntered='';document.getElementById('app').style.display='none';document.getElementById('loginScreen').style.display='flex';document.getElementById('pinArea').style.display='none';document.querySelectorAll('.userBtn').forEach(b=>b.classList.remove('selected'));}
+
+// ── LOAD ALL ───────────────────────────────────
+async function loadAll(){
+  try{
+    [allJobs,allCompanies,allContacts,allTime,allProcesses,allJobNotes]=await Promise.all([
+      api('jobs',{filter:'&order=created_at.desc'}),
+      api('companies',{filter:'&order=name'}),
+      api('contacts',{filter:'&order=name'}),
+      api('time_entries',{filter:'&order=clock_in.desc'}),
+      api('processes',{filter:'&order=sort_order'}),
+      api('job_notes',{filter:'&order=created_at.desc'})
+    ]);
+    renderDashboard();renderJobs();
+    if(canEdit()){renderQuotes();renderCustomers();}
+    renderTime();
+    if(canEdit()){populateReportFilters();}
+    if(canAdmin()){renderTeam();renderProcessList();}
+    populateTimeFilter();
+  }catch(e){alert('Error loading data: '+e.message);}
+}
+
+function showSection(name,btn){
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('nav button').forEach(b=>b.classList.remove('active'));
+  document.getElementById('sec-'+name).classList.add('active');
+  if(btn)btn.classList.add('active');
+}
+
+// ── DASHBOARD ──────────────────────────────────
+function renderDashboard(){
+  const aJ=allJobs.filter(j=>j.status==='active').length;
+  const q=allJobs.filter(j=>j.status==='quote').length;
+  const oT=allTime.filter(t=>!t.clock_out).length;
+  const hrs=allTime.filter(t=>t.clock_out).reduce((s,t)=>s+(t.clock_out-t.clock_in)/3600000,0);
+  document.getElementById('statGrid').innerHTML=`
+    <div class="stat-card"><div class="num">${aJ}</div><div class="lbl">Active Jobs</div></div>
+    <div class="stat-card"><div class="num">${q}</div><div class="lbl">Open Quotes</div></div>
+    <div class="stat-card"><div class="num">${allCompanies.length}</div><div class="lbl">Companies</div></div>
+    <div class="stat-card"><div class="num">${oT}</div><div class="lbl">Clocked In Now</div></div>
+    <div class="stat-card"><div class="num">${Math.round(hrs)}</div><div class="lbl">Total Hours</div></div>`;
+  document.getElementById('recentJobs').innerHTML=allJobs.slice(0,8).length
+    ?`<table><thead><tr><th>Job #</th><th>Name</th><th>Company</th><th>Status</th></tr></thead><tbody>
+      ${allJobs.slice(0,8).map(j=>{const co=allCompanies.find(c=>c.id===j.company_id);
+        return `<tr><td>${j.number||'-'}</td><td>${j.name}</td><td>${co?co.name:(j.customer||'-')}</td>
+          <td><span class="badge badge-${(j.status||'active').replace(' ','-')}">${j.status||'active'}</span></td></tr>`;
+      }).join('')}</tbody></table>`:'<div class="empty-state">No jobs yet</div>';
+  const active=allTime.filter(t=>!t.clock_out);
+  document.getElementById('clockedInNow').innerHTML=active.length
+    ?`<table><thead><tr><th>Employee</th><th>Job</th><th>Process</th><th>Clocked In At</th></tr></thead><tbody>
+      ${active.map(t=>{const job=allJobs.find(j=>j.id===t.job_id);
+        return `<tr><td class="clocked-in">${t.user_name}</td><td>${job?job.name:'-'}</td><td>${t.process_name||'-'}</td><td>${fmtTime(t.clock_in)}</td></tr>`;
+      }).join('')}</tbody></table>`:'<div class="empty-state">Nobody clocked in right now</div>';
+}
+
+// ── JOBS ───────────────────────────────────────
+function renderJobs(filter=''){
+  // Show role banner for workers
+  const banner=document.getElementById('jobsRoleBanner');
+  if(isWorker()){
+    banner.innerHTML=`<div class="role-banner">👷 <strong>Worker view</strong> — You can view jobs, add notes and photos, and log your time. Contact a manager to make changes.</div>`;
+  }else{banner.innerHTML='';}
+  // Show/hide new job button
+  document.getElementById('btnNewJob').style.display=canEdit()?'':'none';
+  document.getElementById('jobEditCol').textContent=canEdit()?'Edit':'';
+
+  const jobs=allJobs.filter(j=>j.status!=='quote'&&(!filter||[j.name,j.number,j.customer].some(v=>v?.toLowerCase().includes(filter))));
+  document.getElementById('jobsTable').innerHTML=jobs.length?jobs.map(j=>{
+    const co=allCompanies.find(c=>c.id===j.company_id);
+    const ct=allContacts.find(c=>c.id===j.contact_id);
+    const noteCount=allJobNotes.filter(n=>n.job_id===j.id).length;
+    return `
+      <tr class="job-row hoverable" onclick="toggleJobDetail('${j.id}',this)">
+        <td><span class="expand-icon">▶</span></td>
+        <td>${j.number||'-'}</td>
+        <td><strong>${j.name}</strong></td>
+        <td>${co?co.name:(j.customer||'-')}</td>
+        <td>${ct?ct.name:(j.customer_contact||'-')}</td>
+        <td>${j.project_manager||'-'}</td>
+        <td>${j.due_date||'-'}</td>
+        <td><span class="badge badge-${(j.status||'active').replace(' ','-')}">${j.status||'active'}</span></td>
+        <td>${canEdit()?`<button class="btn btn-sm btn-secondary" onclick="event.stopPropagation();openJobModal(false,'${j.id}')">Edit</button>`:''}
+            <button class="btn btn-sm btn-blue" onclick="event.stopPropagation();openJobNotes('${j.id}')" style="margin-left:4px">
+              📋 Notes${noteCount?` (${noteCount})`:''}
+            </button>
+        </td>
+      </tr>
+      <tr class="job-detail-row" id="jd-${j.id}" style="display:none">
+        <td colspan="9">
+          <div class="job-detail-inner">
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:12px;font-size:0.85rem">
+              <div><span style="color:var(--text-muted);font-size:0.72rem;text-transform:uppercase;letter-spacing:1px">Description</span><br>${j.description||'—'}</div>
+              ${canEdit()?`<div><span style="color:var(--text-muted);font-size:0.72rem;text-transform:uppercase;letter-spacing:1px">Contract Amount</span><br>${j.quote_amount?'$'+Number(j.quote_amount).toLocaleString():'—'}</div>`:''}
+              <div><span style="color:var(--text-muted);font-size:0.72rem;text-transform:uppercase;letter-spacing:1px">Hours Logged</span><br>${allTime.filter(t=>t.job_id===j.id&&t.clock_out).reduce((s,t)=>s+(t.clock_out-t.clock_in)/3600000,0).toFixed(1)}h</div>
+            </div>
+            ${renderJobNotesInline(j.id)}
+          </div>
+        </td>
+      </tr>`;
+  }).join(''):'<tr><td colspan="9" class="empty-state">No active jobs</td></tr>';
+}
+
+function renderJobNotesInline(jobId){
+  const notes=allJobNotes.filter(n=>n.job_id===jobId).slice(0,3);
+  if(!notes.length)return`<div style="color:var(--text-muted);font-size:0.82rem;font-style:italic">No notes yet — click 📋 Notes to add one.</div>`;
+  return`<div style="font-size:0.72rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;font-weight:600;margin-bottom:6px">Recent Notes</div>
+  <div class="notes-list">${notes.map(n=>`
+    <div class="note-item">
+      <div class="note-meta"><strong>${n.user_name}</strong> &nbsp;·&nbsp; ${fmtTime(n.created_at)}</div>
+      ${n.note?`<div class="note-text">${n.note}</div>`:''}
+      ${n.photo_url?`<div class="note-photo"><img src="${n.photo_url}" onclick="openLightbox('${n.photo_url}')" title="Click to enlarge"></div>`:''}
+    </div>`).join('')}</div>
+  ${allJobNotes.filter(n=>n.job_id===jobId).length>3?`<div style="font-size:0.8rem;color:var(--text-muted);margin-top:4px">+ ${allJobNotes.filter(n=>n.job_id===jobId).length-3} more — click 📋 Notes to see all</div>`:''}`;
+}
+
+function toggleJobDetail(id,row){
+  const dr=document.getElementById('jd-'+id);
+  const isOpen=dr.style.display!=='none';
+  dr.style.display=isOpen?'none':'table-row';
+  row.classList.toggle('expanded',!isOpen);
+}
+function filterJobs(v){renderJobs(v.toLowerCase());}
+
+// ── JOB NOTES MODAL ────────────────────────────
+function openJobNotes(jobId){
+  currentNotesJobId=jobId;
+  const job=allJobs.find(j=>j.id===jobId);
+  document.getElementById('jobNotesTitle').textContent=`Notes & Photos — ${job?.name||'Job'}`;
+  document.getElementById('noteText').value='';
+  document.getElementById('notePhoto').value='';
+  document.getElementById('photoChosen').textContent='';
+  renderNotesModal(jobId);
+  document.getElementById('jobNotesModal').classList.add('open');
+}
+function renderNotesModal(jobId){
+  const notes=allJobNotes.filter(n=>n.job_id===jobId);
+  const el=document.getElementById('jobNotesList');
+  if(!notes.length){el.innerHTML='<div class="empty-state" style="padding:20px">No notes or photos yet — add the first one below.</div>';return;}
+  el.innerHTML=`<div class="notes-list">${notes.map(n=>{
+    const canDelete=isOwner()||(currentUser&&n.user_id===currentUser.id);
+    return`<div class="note-item">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px">
+        <div class="note-meta"><strong>${n.user_name}</strong> &nbsp;·&nbsp; ${fmtTime(n.created_at)}</div>
+        ${canDelete?`<button onclick="deleteNote('${n.id}')" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:1rem;line-height:1;padding:0;flex-shrink:0" title="Delete note">🗑</button>`:''}
+      </div>
+      ${n.note?`<div class="note-text">${n.note}</div>`:''}
+      ${n.photo_url?`<div class="note-photo"><img src="${n.photo_url}" onclick="openLightbox('${n.photo_url}')" title="Click to enlarge"></div>`:''}
+    </div>`;
+  }).join('')}</div>`;
+}
+async function deleteNote(id){
+  const n=allJobNotes.find(x=>x.id===id);
+  if(!n)return;
+  if(!(isOwner()||n.user_id===currentUser.id)){alert('You can only delete your own notes.');return;}
+  if(!confirm('Delete this note? This cannot be undone.'))return;
+  try{
+    await del('job_notes',id);
+    allJobNotes=await api('job_notes',{filter:'&order=created_at.desc'});
+    renderNotesModal(currentNotesJobId);
+    renderJobs();
+  }catch(e){alert('Error deleting note: '+e.message);}
+}
+function photoChosen(input){document.getElementById('photoChosen').textContent=input.files[0]?input.files[0].name:'';}
+
+async function submitNote(){
+  const text=document.getElementById('noteText').value.trim();
+  const photoFile=document.getElementById('notePhoto').files[0];
+  if(!text&&!photoFile){alert('Please add a note or select a photo.');return;}
+  let photoUrl=null;
+  if(photoFile){
+    // Store as base64 data URL (no external storage needed)
+    photoUrl=await new Promise(res=>{const r=new FileReader();r.onload=e=>res(e.target.result);r.readAsDataURL(photoFile);});
+  }
+  try{
+    await api('job_notes',{method:'POST',body:{id:crypto.randomUUID(),job_id:currentNotesJobId,user_id:currentUser.id,user_name:currentUser.name,note:text||null,photo_url:photoUrl||null,created_at:Date.now()}});
+    document.getElementById('noteText').value='';
+    document.getElementById('notePhoto').value='';
+    document.getElementById('photoChosen').textContent='';
+    allJobNotes=await api('job_notes',{filter:'&order=created_at.desc'});
+    renderNotesModal(currentNotesJobId);
+    renderJobs();
+  }catch(e){alert('Error saving note: '+e.message);}
+}
+
+// ── QUOTES ─────────────────────────────────────
+function renderQuotes(){
+  const quotes=allJobs.filter(j=>j.status==='quote');
+  document.getElementById('quotesTable').innerHTML=quotes.length?quotes.map(j=>{
+    const co=allCompanies.find(c=>c.id===j.company_id);const ct=allContacts.find(c=>c.id===j.contact_id);
+    const noteCount=allJobNotes.filter(n=>n.job_id===j.id).length;
+    return `<tr class="hoverable">
+      <td>${j.number||'-'}</td><td><strong>${j.name}</strong></td>
+      <td>${co?co.name:(j.customer||'-')}</td><td>${ct?ct.name:(j.customer_contact||'-')}</td>
+      <td>${j.project_manager||'-'}</td>
+      <td>${canEdit()?(j.quote_amount?'$'+Number(j.quote_amount).toLocaleString():'-'):'—'}</td>
+      <td><span class="badge badge-quote">Quote</span></td>
+      <td>
+        ${canEdit()?`<button class="btn btn-sm btn-secondary" onclick="openJobModal(true,'${j.id}')">Edit</button>`:''}
+        <button class="btn btn-sm btn-blue" onclick="openJobNotes('${j.id}')" style="margin-left:4px">
+          📋 Notes${noteCount?` (${noteCount})`:''}
+        </button>
+      </td></tr>`;
+  }).join(''):'<tr><td colspan="8" class="empty-state">No quotes</td></tr>';
+}
+
+// ── JOB MODAL ──────────────────────────────────
+function openJobModal(isQuote=false,id=null){
+  if(!canEdit()){alert('You do not have permission to edit jobs.');return;}
+  editingJobId=id;
+  document.getElementById('jobModalTitle').textContent=id?'Edit Job / Quote':(isQuote?'New Quote':'New Job');
+  document.getElementById('deleteJobBtn').style.display=id?'':'none';
+  document.getElementById('jCompany').innerHTML='<option value="">— Select Company —</option>'+allCompanies.map(c=>`<option value="${c.id}">${c.name}</option>`).join('');
+  if(id){
+    const j=allJobs.find(x=>x.id===id);
+    document.getElementById('jNum').value=j.number||'';document.getElementById('jName').value=j.name||'';
+    document.getElementById('jCompany').value=j.company_id||'';document.getElementById('jPM').value=j.project_manager||'';
+    document.getElementById('jDue').value=j.due_date||'';document.getElementById('jAmount').value=j.quote_amount||'';
+    document.getElementById('jStatus').value=j.status||'active';document.getElementById('jDesc').value=j.description||'';
+    populateJobContacts(j.company_id,j.contact_id);
+  }else{
+    ['jNum','jName','jPM','jDue','jAmount','jDesc'].forEach(i=>document.getElementById(i).value='');
+    document.getElementById('jCompany').value='';document.getElementById('jStatus').value=isQuote?'quote':'active';
+    populateJobContacts(null,null);
+  }
+  document.getElementById('jobModal').classList.add('open');
+}
+function populateJobContacts(companyId,selectedContactId){
+  const sel=document.getElementById('jContact');
+  if(!companyId){sel.innerHTML='<option value="">— Select Company First —</option>';return;}
+  const cts=allContacts.filter(c=>c.company_id===companyId);
+  sel.innerHTML='<option value="">— No Specific Contact —</option>'+cts.map(c=>`<option value="${c.id}"${c.id===selectedContactId?' selected':''}>${c.name}${c.title?' ('+c.title+')':''}</option>`).join('');
+}
+function onJobCompanyChange(){populateJobContacts(document.getElementById('jCompany').value,null);}
+async function saveJob(){
+  if(!canEdit())return;
+  const name=document.getElementById('jName').value.trim();if(!name){alert('Job name is required');return;}
+  const coId=document.getElementById('jCompany').value;const co=allCompanies.find(c=>c.id===coId);
+  const ctId=document.getElementById('jContact').value;const ct=allContacts.find(c=>c.id===ctId);
+  const body={number:document.getElementById('jNum').value.trim(),name,company_id:coId||null,customer:co?co.name:'',
+    contact_id:ctId||null,customer_contact:ct?ct.name:'',project_manager:document.getElementById('jPM').value.trim(),
+    due_date:document.getElementById('jDue').value||null,quote_amount:document.getElementById('jAmount').value||null,
+    status:document.getElementById('jStatus').value,description:document.getElementById('jDesc').value.trim(),
+    is_job:document.getElementById('jStatus').value!=='quote'};
+  try{
+    if(editingJobId){await patch('jobs',editingJobId,body);}
+    else{body.id=crypto.randomUUID();body.created_at=Date.now();await api('jobs',{method:'POST',body});}
+    closeModal('jobModal');await loadAll();
+  }catch(e){alert('Error saving job: '+e.message);}
+}
+async function deleteJob(){
+  if(!canEdit())return;
+  if(!confirm('Delete this job / quote?'))return;
+  await del('jobs',editingJobId);closeModal('jobModal');await loadAll();
+}
+
+// ── CUSTOMERS ──────────────────────────────────
+function renderCustomers(filter=''){
+  const cos=allCompanies.filter(c=>!filter||[c.name,c.email,c.phone,c.address].some(v=>v?.toLowerCase().includes(filter)));
+  const tbody=document.getElementById('custTable');
+  if(!cos.length){tbody.innerHTML='<tr><td colspan="6" class="empty-state">No companies yet</td></tr>';return;}
+  tbody.innerHTML=cos.flatMap(co=>{
+    const contacts=allContacts.filter(c=>c.company_id===co.id);
+    return[
+      `<tr class="company-row" onclick="toggleContacts('${co.id}',this)">
+        <td><span class="expand-icon">▶</span><strong>${co.name}</strong></td>
+        <td>${co.phone||'-'}</td>
+        <td>${co.email?`<a href="mailto:${co.email}" style="color:#64b5f6" onclick="event.stopPropagation()">${co.email}</a>`:'-'}</td>
+        <td>${co.address||'-'}</td>
+        <td><span style="color:var(--text-muted);font-size:0.82rem">${contacts.length} contact${contacts.length!==1?'s':''}</span></td>
+        <td><button class="btn btn-sm btn-secondary" onclick="event.stopPropagation();openCompanyModal('${co.id}')">Edit</button></td>
+      </tr>`,
+      `<tr class="contacts-row" id="cr-${co.id}" style="display:none"><td colspan="6">
+        <div class="contacts-inner">
+          <div class="contacts-inner-header"><span>Contacts at ${co.name}</span>
+            <button class="btn btn-sm btn-ghost" onclick="openCompanyModal('${co.id}',true)">+ Add Contact</button></div>
+          <div class="contact-list">
+            ${contacts.length?contacts.map(c=>`
+              <div class="contact-item">
+                <div class="contact-name">${c.name}</div>
+                <div class="contact-title">${c.title||''}</div>
+                <div class="contact-detail">${c.email?`<a href="mailto:${c.email}">${c.email}</a>`:''}${c.email&&c.phone?' &nbsp;·&nbsp; ':''}${c.phone||''}</div>
+                <div style="margin-left:auto"><button class="btn btn-sm btn-secondary" onclick="openCompanyModal('${co.id}')">Edit</button></div>
+              </div>`).join(''):'<div class="no-contacts">No contacts yet</div>'}
+          </div>
+        </div>
+      </td></tr>`
+    ];
+  }).join('');
+}
+function toggleContacts(id,row){const cr=document.getElementById('cr-'+id);const isOpen=cr.style.display!=='none';cr.style.display=isOpen?'none':'table-row';row.classList.toggle('expanded',!isOpen);}
+function filterCustomers(v){renderCustomers(v.toLowerCase());}
+function openCompanyModal(id=null,addContact=false){
+  if(!canEdit()){return;}
+  editingCompanyId=id;
+  document.getElementById('companyModalTitle').textContent=id?'Edit Company':'New Company';
+  document.getElementById('deleteCompanyBtn').style.display=id?'':'none';
+  if(id){
+    const co=allCompanies.find(x=>x.id===id);
+    document.getElementById('coName').value=co.name||'';document.getElementById('coPhone').value=co.phone||'';
+    document.getElementById('coEmail').value=co.email||'';document.getElementById('coAddress').value=co.address||'';
+    document.getElementById('coNotes').value=co.notes||'';
+    pendingContacts=allContacts.filter(c=>c.company_id===id).map(c=>({...c,_existing:true}));
+  }else{['coName','coPhone','coEmail','coAddress','coNotes'].forEach(i=>document.getElementById(i).value='');pendingContacts=[];}
+  if(addContact)pendingContacts.push({id:null,name:'',title:'',email:'',phone:''});
+  renderContactsEditList();document.getElementById('companyModal').classList.add('open');
+}
+function renderContactsEditList(){
+  const el=document.getElementById('contactsEditList');
+  if(!pendingContacts.length){el.innerHTML='<div class="no-contacts" style="padding:6px 0">No contacts yet</div>';return;}
+  el.innerHTML=pendingContacts.map((c,i)=>`
+    <div class="contact-edit-row">
+      <input placeholder="Name *" value="${c.name||''}" oninput="pendingContacts[${i}].name=this.value">
+      <input placeholder="Title" value="${c.title||''}" oninput="pendingContacts[${i}].title=this.value">
+      <input placeholder="Email" value="${c.email||''}" oninput="pendingContacts[${i}].email=this.value">
+      <input placeholder="Phone" value="${c.phone||''}" oninput="pendingContacts[${i}].phone=this.value">
+      <button class="btn btn-sm btn-danger" onclick="removeContactRow(${i})" style="padding:4px 8px">✕</button>
+    </div>`).join('');
+}
+function addContactRow(){pendingContacts.push({id:null,name:'',title:'',email:'',phone:''});renderContactsEditList();}
+function removeContactRow(i){pendingContacts.splice(i,1);renderContactsEditList();}
+async function saveCompany(){
+  if(!canEdit())return;
+  const name=document.getElementById('coName').value.trim();if(!name){alert('Company name is required');return;}
+  const body={name,phone:document.getElementById('coPhone').value.trim(),email:document.getElementById('coEmail').value.trim(),address:document.getElementById('coAddress').value.trim(),notes:document.getElementById('coNotes').value.trim()};
+  try{
+    let coId=editingCompanyId;
+    if(coId){await patch('companies',coId,body);}
+    else{body.id=crypto.randomUUID();body.created_at=Date.now();const rows=await api('companies',{method:'POST',body});coId=rows[0]?.id||body.id;}
+    const existing=allContacts.filter(c=>c.company_id===coId);
+    const keepIds=pendingContacts.filter(c=>c.id).map(c=>c.id);
+    for(const ec of existing){if(!keepIds.includes(ec.id))await del('contacts',ec.id);}
+    for(const pc of pendingContacts){
+      if(!pc.name.trim())continue;
+      const cb={name:pc.name.trim(),title:pc.title||'',email:pc.email||'',phone:pc.phone||''};
+      if(pc.id){await patch('contacts',pc.id,cb);}
+      else{await api('contacts',{method:'POST',body:{id:crypto.randomUUID(),company_id:coId,...cb,created_at:Date.now()}});}
+    }
+    closeModal('companyModal');await loadAll();
+  }catch(e){alert('Error saving: '+e.message);}
+}
+async function deleteCompany(){if(!canEdit())return;if(!confirm('Delete this company and all its contacts?'))return;await del('companies',editingCompanyId);closeModal('companyModal');await loadAll();}
+
+// ── TIME ───────────────────────────────────────
+function fmtTime(ms){if(!ms)return'-';return new Date(ms).toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'});}
+function populateTimeFilter(){
+  const sel=document.getElementById('timeFilterUser'),cur=sel.value;
+  const opts=canEdit()?allUsers:[currentUser];
+  sel.innerHTML='<option value="">All Employees</option>'+opts.map(u=>`<option value="${u.id}"${u.id===cur?' selected':''}>${u.name}</option>`).join('');
+  if(isWorker())sel.value=currentUser.id;
+}
+function renderTime(){
+  const fid=document.getElementById('timeFilterUser')?.value||'';
+  const isP=canEdit();
+  let entries=fid?allTime.filter(t=>t.user_id===fid):allTime;
+  if(isWorker())entries=entries.filter(t=>t.user_id===currentUser.id);
+  document.getElementById('approveColHead').style.display=isP?'':'none';
+  document.getElementById('timeEditColHead').textContent=isOwner()?'Edit':'';
+  const colSpan=isOwner()?9:isP?8:7;
+  document.getElementById('timeTable').innerHTML=entries.length?entries.map(t=>{
+    const job=allJobs.find(j=>j.id===t.job_id);
+    const hrs=t.clock_out?((t.clock_out-t.clock_in)/3600000).toFixed(2):null;
+    return `<tr class="hoverable"><td>${t.user_name}</td><td>${job?job.name:'-'}</td>
+      <td>${t.process_name||'-'}</td><td>${fmtTime(t.clock_in)}</td>
+      <td>${t.clock_out?fmtTime(t.clock_out):'<span class="clocked-in">● Active</span>'}</td>
+      <td class="hours-cell">${hrs?hrs+'h':'-'}</td><td>${t.note||'-'}</td>
+      ${isP?`<td>${t.approved?'<span style="color:#4caf50;font-size:0.8rem;font-weight:700">✓ Approved</span>':`<button class="btn btn-sm btn-secondary" onclick="approveTime('${t.id}')">Approve</button>`}</td>`:''}
+      ${isOwner()?`<td><button class="btn btn-sm btn-secondary" onclick="openTimeEditModal('${t.id}')">Edit</button></td>`:''}
+    </tr>`;
+  }).join(''):`<tr><td colspan="${colSpan}" class="empty-state">No time entries</td></tr>`;
+}
+async function approveTime(id){if(!canEdit())return;await patch('time_entries',id,{approved:true});await loadAll();}
+
+let editingTimeId=null;
+function toLocalDatetimeInput(ms){
+  if(!ms)return'';
+  const d=new Date(ms);
+  const pad=n=>String(n).padStart(2,'0');
+  return`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+function openTimeEditModal(id){
+  if(!isOwner()){alert('Only owners can edit time entries.');return;}
+  editingTimeId=id;
+  const t=allTime.find(x=>x.id===id);
+  // Populate dropdowns
+  document.getElementById('teUser').innerHTML=allUsers.map(u=>`<option value="${u.id}"${u.id===t.user_id?' selected':''}>${u.name}</option>`).join('');
+  document.getElementById('teJob').innerHTML=allJobs.map(j=>`<option value="${j.id}"${j.id===t.job_id?' selected':''}>${j.name}${j.number?' ('+j.number+')':''}</option>`).join('');
+  document.getElementById('teProcess').innerHTML='<option value="">— None —</option>'+allProcesses.map(p=>`<option value="${p.id}|${p.name}"${p.id===t.process_id?' selected':''}>${p.name}</option>`).join('');
+  document.getElementById('teClockIn').value=toLocalDatetimeInput(t.clock_in);
+  document.getElementById('teClockOut').value=toLocalDatetimeInput(t.clock_out);
+  document.getElementById('teNote').value=t.note||'';
+  document.getElementById('teApproved').value=t.approved?'true':'false';
+  document.getElementById('timeEditModal').classList.add('open');
+}
+async function saveTimeEntry(){
+  if(!isOwner())return;
+  const uid=document.getElementById('teUser').value;
+  const u=allUsers.find(x=>x.id===uid);
+  const jid=document.getElementById('teJob').value;
+  const procVal=document.getElementById('teProcess').value;
+  const [procId,procName]=procVal?procVal.split('|'):[null,null];
+  const ciVal=document.getElementById('teClockIn').value;
+  const coVal=document.getElementById('teClockOut').value;
+  if(!ciVal){alert('Clock In time is required');return;}
+  const clockIn=new Date(ciVal).getTime();
+  const clockOut=coVal?new Date(coVal).getTime():null;
+  if(clockOut&&clockOut<=clockIn){alert('Clock Out must be after Clock In');return;}
+  const body={
+    user_id:uid, user_name:u?u.name:'',
+    job_id:jid,
+    process_id:procId||null, process_name:procName||null,
+    clock_in:clockIn, clock_out:clockOut||null,
+    note:document.getElementById('teNote').value.trim(),
+    approved:document.getElementById('teApproved').value==='true'
+  };
+  try{
+    await patch('time_entries',editingTimeId,body);
+    closeModal('timeEditModal');await loadAll();
+  }catch(e){alert('Error saving time entry: '+e.message);}
+}
+async function deleteTimeEntry(){
+  if(!isOwner())return;
+  if(!confirm('Permanently delete this time entry? This cannot be undone.'))return;
+  try{await del('time_entries',editingTimeId);closeModal('timeEditModal');await loadAll();}
+  catch(e){alert('Error deleting: '+e.message);}
+}
+
+function openClockModal(){
+  const validUsers=isWorker()?allUsers.filter(u=>u.id===currentUser.id):allUsers;
+  document.getElementById('clockUser').innerHTML=validUsers.map(u=>`<option value="${u.id}">${u.name}</option>`).join('');
+  document.getElementById('clockUser').value=currentUser.id;
+  const aj=allJobs.filter(j=>j.status==='active');
+  document.getElementById('clockJob').innerHTML=aj.length?aj.map(j=>`<option value="${j.id}">${j.name}${j.number?' ('+j.number+')':''}</option>`).join(''):'<option value="">No active jobs</option>';
+  document.getElementById('clockNote').value='';
+  document.getElementById('clockProcessId').value='';document.getElementById('clockProcessName').value='';
+  const active=allProcesses.filter(p=>p.active!==false);
+  document.getElementById('processChips').innerHTML=active.map(p=>`<div class="process-chip" onclick="selectProcess('${p.id}','${p.name}',this)">${p.name}</div>`).join('');
+  document.getElementById('clockModal').classList.add('open');
+}
+function selectProcess(id,name,el){document.querySelectorAll('.process-chip').forEach(c=>c.classList.remove('selected'));el.classList.add('selected');document.getElementById('clockProcessId').value=id;document.getElementById('clockProcessName').value=name;}
+async function clockIn(){
+  const uid=document.getElementById('clockUser').value,jid=document.getElementById('clockJob').value;
+  if(!uid||!jid){alert('Please select employee and job');return;}
+  const u=allUsers.find(x=>x.id===uid);
+  if(allTime.find(t=>t.user_id===uid&&!t.clock_out)){alert(`${u.name} is already clocked in!`);return;}
+  try{
+    await api('time_entries',{method:'POST',body:{id:crypto.randomUUID(),job_id:jid,user_id:uid,user_name:u.name,clock_in:Date.now(),
+      process_id:document.getElementById('clockProcessId').value||null,
+      process_name:document.getElementById('clockProcessName').value||null,
+      note:document.getElementById('clockNote').value.trim(),approved:false}});
+    closeModal('clockModal');await loadAll();
+  }catch(e){alert('Clock in error: '+e.message);}
+}
+async function clockOut(){
+  const uid=document.getElementById('clockUser').value;const u=allUsers.find(x=>x.id===uid);
+  const entry=allTime.find(t=>t.user_id===uid&&!t.clock_out);
+  if(!entry){alert(`${u.name} is not currently clocked in.`);return;}
+  try{await patch('time_entries',entry.id,{clock_out:Date.now(),note:document.getElementById('clockNote').value.trim()||entry.note});closeModal('clockModal');await loadAll();}
+  catch(e){alert('Clock out error: '+e.message);}
+}
+
+// ── PROCESSES ──────────────────────────────────
+function renderProcessList(){
+  const el=document.getElementById('processList');
+  if(!allProcesses.length){el.innerHTML='<div class="empty-state">No processes</div>';return;}
+  el.innerHTML=allProcesses.map(p=>`
+    <div class="process-item">
+      <span>${p.name}</span>
+      <span style="font-size:0.75rem;color:var(--text-muted)">${p.active===false?'Inactive':'Active'}</span>
+      <button class="btn btn-sm btn-secondary" onclick="openEditProcessModal('${p.id}')">Edit</button>
+    </div>`).join('');
+}
+function openAddProcessModal(){editingProcessId=null;document.getElementById('processModalTitle').textContent='Add Process';document.getElementById('pName').value='';document.getElementById('deleteProcessBtn').style.display='none';document.getElementById('processModal').classList.add('open');}
+function openEditProcessModal(id){editingProcessId=id;const p=allProcesses.find(x=>x.id===id);document.getElementById('processModalTitle').textContent='Edit Process';document.getElementById('pName').value=p.name;document.getElementById('deleteProcessBtn').style.display='';document.getElementById('processModal').classList.add('open');}
+async function saveProcess(){
+  const name=document.getElementById('pName').value.trim();if(!name){alert('Name required');return;}
+  try{
+    if(editingProcessId){await patch('processes',editingProcessId,{name});}
+    else{const max=allProcesses.reduce((m,p)=>Math.max(m,p.sort_order||0),0);await api('processes',{method:'POST',body:{id:crypto.randomUUID(),name,active:true,sort_order:max+1}});}
+    closeModal('processModal');await loadAll();
+  }catch(e){alert('Error: '+e.message);}
+}
+async function deleteProcess(){if(!confirm('Remove this process?'))return;await del('processes',editingProcessId);closeModal('processModal');await loadAll();}
+
+// ── TEAM ───────────────────────────────────────
+function renderTeam(){
+  document.getElementById('teamTable').innerHTML=allUsers.length?allUsers.map(u=>`<tr class="hoverable">
+    <td><strong>${u.name}</strong></td>
+    <td><span class="badge badge-${u.role}">${u.role}</span></td>
+    <td><button class="btn btn-sm btn-secondary" onclick="openEditUserModal('${u.id}')">Edit</button></td>
+  </tr>`).join(''):'<tr><td colspan="3" class="empty-state">No team members</td></tr>';
+}
+function openUserModal(){
+  if(!canAdmin()){alert('Only owners can manage team members.');return;}
+  editingUserId=null;document.getElementById('userModalTitle').textContent='Add Team Member';
+  document.getElementById('deleteUserBtn').style.display='none';
+  ['uName','uPin'].forEach(i=>document.getElementById(i).value='');document.getElementById('uRole').value='worker';
+  document.getElementById('userModal').classList.add('open');
+}
+function openEditUserModal(id){
+  if(!canAdmin()){alert('Only owners can manage team members.');return;}
+  editingUserId=id;const u=allUsers.find(x=>x.id===id);
+  document.getElementById('userModalTitle').textContent='Edit Team Member';
+  document.getElementById('deleteUserBtn').style.display=u.role==='owner'?'none':'';
+  document.getElementById('uName').value=u.name;document.getElementById('uRole').value=u.role;document.getElementById('uPin').value=u.pin;
+  document.getElementById('userModal').classList.add('open');
+}
+async function saveUser(){
+  if(!canAdmin())return;
+  const name=document.getElementById('uName').value.trim(),pin=document.getElementById('uPin').value.trim();
+  if(!name){alert('Name is required');return;}if(!pin||pin.length!==5){alert('PIN must be exactly 5 digits');return;}
+  const body={name,role:document.getElementById('uRole').value,pin};
+  try{
+    if(editingUserId){await patch('users',editingUserId,body);}
+    else{body.id=crypto.randomUUID();await api('users',{method:'POST',body});}
+    closeModal('userModal');allUsers=await api('users',{filter:'&order=name'});renderTeam();
+  }catch(e){alert('Error saving: '+e.message);}
+}
+async function deleteUser(){
+  if(!canAdmin())return;
+  const u=allUsers.find(x=>x.id===editingUserId);if(!confirm(`Remove ${u.name}?`))return;
+  await del('users',editingUserId);closeModal('userModal');allUsers=await api('users',{filter:'&order=name'});renderTeam();
+}
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+
+// ── LIGHTBOX ───────────────────────────────────
+function openLightbox(src){document.getElementById('lightboxImg').src=src;document.getElementById('lightbox').classList.add('open');}
+function closeLightbox(){document.getElementById('lightbox').classList.remove('open');}
+
+// ── REPORTS ────────────────────────────────────
+function populateReportFilters(){
+  document.getElementById('rEmployee').innerHTML='<option value="">All Employees</option>'+allUsers.map(u=>`<option value="${u.id}">${u.name}</option>`).join('');
+  document.getElementById('rJob').innerHTML='<option value="">All Jobs</option>'+allJobs.map(j=>`<option value="${j.id}">${j.name}${j.number?' ('+j.number+')':''}</option>`).join('');
+  document.getElementById('rProcess').innerHTML='<option value="">All Processes</option>'+allProcesses.map(p=>`<option value="${p.id}">${p.name}</option>`).join('');
+  document.getElementById('rJobCompany').innerHTML='<option value="">All Companies</option>'+allCompanies.map(c=>`<option value="${c.id}">${c.name}</option>`).join('');
+  document.getElementById('rpJob').innerHTML='<option value="">All Jobs</option>'+allJobs.map(j=>`<option value="${j.id}">${j.name}${j.number?' ('+j.number+')':''}</option>`).join('');
+}
+function getTimesheetData(){
+  const from=document.getElementById('rDateFrom').value,to=document.getElementById('rDateTo').value;
+  const uid=document.getElementById('rEmployee').value,jid=document.getElementById('rJob').value,pid=document.getElementById('rProcess').value;
+  return allTime.filter(t=>{
+    if(uid&&t.user_id!==uid)return false;if(jid&&t.job_id!==jid)return false;if(pid&&t.process_id!==pid)return false;
+    if(from&&t.clock_in<new Date(from).getTime())return false;if(to&&t.clock_in>new Date(to).getTime()+86400000)return false;
+    return true;
+  }).map(t=>{const job=allJobs.find(j=>j.id===t.job_id);const hrs=t.clock_out?((t.clock_out-t.clock_in)/3600000):null;
+    return{Employee:t.user_name,Job:job?job.name:'-','Job #':job?job.number||'-':'-',Process:t.process_name||'-',
+      'Clock In':fmtTime(t.clock_in),'Clock Out':t.clock_out?fmtTime(t.clock_out):'Active',
+      Hours:hrs?hrs.toFixed(2):'-',Note:t.note||'',Approved:t.approved?'Yes':'No'};});
+}
+function previewTimesheetReport(){
+  const data=getTimesheetData();const el=document.getElementById('timesheetReportPreview');
+  if(!data.length){el.innerHTML='<div class="empty-state">No records match filters</div>';return;}
+  const cols=Object.keys(data[0]);
+  const total=data.reduce((s,r)=>s+(parseFloat(r.Hours)||0),0);
+  el.innerHTML=`<table><thead><tr>${cols.map(c=>`<th>${c}</th>`).join('')}</tr></thead>
+    <tbody>${data.map(r=>`<tr>${cols.map(c=>`<td>${r[c]}</td>`).join('')}</tr>`).join('')}
+    <tr style="font-weight:700;border-top:2px solid var(--border)"><td colspan="6" style="text-align:right;color:var(--text-muted)">TOTAL</td><td>${total.toFixed(2)}h</td><td colspan="2"></td></tr>
+    </tbody></table>`;
+}
+function getJobsData(){
+  const status=document.getElementById('rJobStatus').value,coId=document.getElementById('rJobCompany').value;
+  return allJobs.filter(j=>{if(status&&j.status!==status)return false;if(coId&&j.company_id!==coId)return false;return true;}).map(j=>{
+    const co=allCompanies.find(c=>c.id===j.company_id);const ct=allContacts.find(c=>c.id===j.contact_id);
+    const jobHrs=allTime.filter(t=>t.job_id===j.id&&t.clock_out).reduce((s,t)=>s+(t.clock_out-t.clock_in)/3600000,0);
+    const jobNotes=allJobNotes.filter(n=>n.job_id===j.id);
+    const notesSummary=jobNotes.map(n=>`[${n.user_name}] ${n.note||'(photo only)'}`).join(' | ');
+    const photoCount=jobNotes.filter(n=>n.photo_url).length;
+    return{'Job #':j.number||'','Job Name':j.name,Company:co?co.name:(j.customer||''),Contact:ct?ct.name:(j.customer_contact||''),
+      'Project Mgr':j.project_manager||'','Due Date':j.due_date||'',Status:j.status||'',
+      'Quote Amount':j.quote_amount?'$'+Number(j.quote_amount).toLocaleString():'',
+      'Hours Logged':jobHrs.toFixed(2),'# Notes':jobNotes.length,'# Photos':photoCount,
+      'Notes Summary':notesSummary,Description:j.description||''};});
+}
+// Separate full notes export with one row per note
+function getJobNotesData(){
+  return allJobNotes.map(n=>{
+    const job=allJobs.find(j=>j.id===n.job_id);
+    return{
+      'Job Name':job?job.name:'-','Job #':job?job.number||'-':'-',
+      'Added By':n.user_name,'Date':fmtTime(n.created_at),
+      Note:n.note||'','Has Photo':n.photo_url?'Yes':'No',
+      'Photo (open link to view)':n.photo_url?'See attached data — open in browser':'',
+    };
+  });
+}
+function previewJobsReport(){
+  const data=getJobsData();const el=document.getElementById('jobsReportPreview');
+  if(!data.length){el.innerHTML='<div class="empty-state">No records match filters</div>';return;}
+  const cols=Object.keys(data[0]);
+  el.innerHTML=`<table><thead><tr>${cols.map(c=>`<th>${c}</th>`).join('')}</tr></thead>
+    <tbody>${data.map(r=>`<tr>${cols.map(c=>`<td>${r[c]}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
+}
+function getCustomersData(){
+  const rows=[];
+  allCompanies.forEach(co=>{
+    const contacts=allContacts.filter(c=>c.company_id===co.id);
+    if(!contacts.length){rows.push({Company:co.name,'Main Phone':co.phone||'','Main Email':co.email||'',Address:co.address||'','Contact Name':'','Contact Title':'','Contact Email':'','Contact Phone':'',Notes:co.notes||''});}
+    else{contacts.forEach((c,i)=>{rows.push({Company:i===0?co.name:'','Main Phone':i===0?co.phone||'':'','Main Email':i===0?co.email||'':'',Address:i===0?co.address||'':'','Contact Name':c.name,'Contact Title':c.title||'','Contact Email':c.email||'','Contact Phone':c.phone||'',Notes:i===0?co.notes||'':''});});}
+  });return rows;
+}
+function previewCustomersReport(){
+  const data=getCustomersData();const el=document.getElementById('customersReportPreview');
+  if(!data.length){el.innerHTML='<div class="empty-state">No customers yet</div>';return;}
+  const cols=Object.keys(data[0]);
+  el.innerHTML=`<table><thead><tr>${cols.map(c=>`<th>${c}</th>`).join('')}</tr></thead>
+    <tbody>${data.map(r=>`<tr>${cols.map(c=>`<td>${r[c]}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
+}
+function getProcessData(){
+  const from=document.getElementById('rpDateFrom').value,to=document.getElementById('rpDateTo').value,jid=document.getElementById('rpJob').value;
+  let entries=allTime.filter(t=>{
+    if(!t.clock_out)return false;if(jid&&t.job_id!==jid)return false;
+    if(from&&t.clock_in<new Date(from).getTime())return false;if(to&&t.clock_in>new Date(to).getTime()+86400000)return false;return true;
+  });
+  const map={};
+  entries.forEach(t=>{const key=t.process_name||'Unspecified';
+    if(!map[key])map[key]={Process:key,Entries:0,'Total Hours':0,Employees:new Set()};
+    map[key].Entries++;map[key]['Total Hours']+=(t.clock_out-t.clock_in)/3600000;map[key].Employees.add(t.user_name);});
+  return Object.values(map).map(r=>({Process:r.Process,Entries:r.Entries,'Total Hours':r['Total Hours'].toFixed(2),Employees:[...r.Employees].join(', ')})).sort((a,b)=>b['Total Hours']-a['Total Hours']);
+}
+function previewProcessReport(){
+  const data=getProcessData();const el=document.getElementById('processReportPreview');
+  if(!data.length){el.innerHTML='<div class="empty-state">No records match filters</div>';return;}
+  const cols=Object.keys(data[0]);
+  const total=data.reduce((s,r)=>s+parseFloat(r['Total Hours']),0);
+  el.innerHTML=`<table><thead><tr>${cols.map(c=>`<th>${c}</th>`).join('')}</tr></thead>
+    <tbody>${data.map(r=>`<tr>${cols.map(c=>`<td>${r[c]}</td>`).join('')}</tr>`).join('')}
+    <tr style="font-weight:700;border-top:2px solid var(--border)"><td>TOTAL</td><td></td><td>${total.toFixed(2)}</td><td></td></tr>
+    </tbody></table>`;
+}
+function exportToCSV(data,filename){
+  if(!data.length){alert('No data to export');return;}
+  const cols=Object.keys(data[0]);
+  const rows=[cols.join(','),...data.map(r=>cols.map(c=>{const v=String(r[c]??'').replace(/"/g,'""');return v.includes(',')||v.includes('"')||v.includes('\n')?`"${v}"`:v;}).join(','))];
+  const blob=new Blob([rows.join('\n')],{type:'text/csv;charset=utf-8;'});
+  const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=filename;a.click();URL.revokeObjectURL(url);
+}
+function exportTimesheetReport(){exportToCSV(getTimesheetData(),`JM_Steel_Timesheets_${today()}.csv`);}
+function exportJobsReport(){exportToCSV(getJobsData(),`JM_Steel_Jobs_${today()}.csv`);}
+function exportJobNotesReport(){exportToCSV(getJobNotesData(),`JM_Steel_JobNotes_${today()}.csv`);}
+function exportCustomersReport(){exportToCSV(getCustomersData(),`JM_Steel_Customers_${today()}.csv`);}
+function exportProcessReport(){exportToCSV(getProcessData(),`JM_Steel_ProcessSummary_${today()}.csv`);}
+function today(){return new Date().toISOString().slice(0,10);}
+
+// ── INIT ───────────────────────────────────────
+loadUsers();
+</script>
+</body>
+</html>
