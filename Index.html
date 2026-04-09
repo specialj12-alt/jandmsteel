@@ -484,6 +484,7 @@
     <div class="form-grid">
       <div class="form-group"><label>Job Number</label><input id="jNum" placeholder="e.g. 2025-001"></div>
       <div class="form-group"><label>Job Name</label><input id="jName" placeholder="Project name"></div>
+      <div class="form-group"><label>PO #</label><input id="jPO" placeholder="e.g. PO-12345"></div>
       <div class="form-group"><label>Company (Bills To)</label><select id="jCompany" onchange="onJobCompanyChange()"><option value="">— Select Company —</option></select></div>
       <div class="form-group"><label>Job Contact</label><select id="jContact"><option value="">— Select Company First —</option></select></div>
       <div class="form-group"><label>Project Manager</label><input id="jPM" placeholder="Name"></div>
@@ -912,12 +913,13 @@ function openJobModal(isQuote=false,id=null){
   if(id){
     const j=allJobs.find(x=>x.id===id);
     document.getElementById('jNum').value=j.number||'';document.getElementById('jName').value=j.name||'';
+    document.getElementById('jPO').value=j.po_number||'';
     document.getElementById('jCompany').value=j.company_id||'';document.getElementById('jPM').value=j.project_manager||'';
     document.getElementById('jDue').value=j.due_date||'';document.getElementById('jAmount').value=j.quote_amount||'';
     document.getElementById('jStatus').value=j.status||'active';document.getElementById('jDesc').value=j.description||'';
     populateJobContacts(j.company_id,j.contact_id);
   }else{
-    ['jNum','jName','jPM','jDue','jAmount','jDesc'].forEach(i=>document.getElementById(i).value='');
+    ['jNum','jName','jPO','jPM','jDue','jAmount','jDesc'].forEach(i=>document.getElementById(i).value='');
     document.getElementById('jCompany').value='';document.getElementById('jStatus').value=isQuote?'quote':'active';
     populateJobContacts(null,null);
   }
@@ -936,6 +938,7 @@ async function saveJob(){
   const coId=document.getElementById('jCompany').value;const co=allCompanies.find(c=>c.id===coId);
   const ctId=document.getElementById('jContact').value;const ct=allContacts.find(c=>c.id===ctId);
   const body={number:document.getElementById('jNum').value.trim(),name,company_id:coId||null,customer:co?co.name:'',
+    po_number:document.getElementById('jPO').value.trim()||null,
     contact_id:ctId||null,customer_contact:ct?ct.name:'',project_manager:document.getElementById('jPM').value.trim(),
     due_date:document.getElementById('jDue').value||null,quote_amount:document.getElementById('jAmount').value||null,
     status:document.getElementById('jStatus').value,description:document.getElementById('jDesc').value.trim(),
@@ -1263,7 +1266,7 @@ function getJobsData(){
     const jobNotes=allJobNotes.filter(n=>n.job_id===j.id);
     const notesSummary=jobNotes.map(n=>`[${n.user_name}] ${n.note||'(photo only)'}`).join(' | ');
     const photoCount=jobNotes.filter(n=>n.photo_url).length;
-    return{'Job #':j.number||'','Job Name':j.name,Company:co?co.name:(j.customer||''),Contact:ct?ct.name:(j.customer_contact||''),
+    return{'Job #':j.number||'','Job Name':j.name,'PO #':j.po_number||'',Company:co?co.name:(j.customer||''),Contact:ct?ct.name:(j.customer_contact||''),
       'Project Mgr':j.project_manager||'','Due Date':j.due_date||'',Status:j.status||'',
       'Quote Amount':j.quote_amount?'$'+Number(j.quote_amount).toLocaleString():'',
       'Hours Logged':jobHrs.toFixed(2),'# Notes':jobNotes.length,'# Photos':photoCount,
