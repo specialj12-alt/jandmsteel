@@ -398,7 +398,7 @@
         </div>
       </div>
       <div class="card"><div class="table-wrap"><table>
-        <thead><tr><th>Employee</th><th>Job</th><th>Process</th><th>Clock In</th><th>Clock Out</th><th>Hours</th><th>Note</th><th id="approveColHead">Approve</th><th id="timeEditColHead"></th></tr></thead>
+        <thead><tr><th>Employee</th><th>Job #</th><th>Process</th><th>Clock In</th><th>Clock Out</th><th>Hours</th><th>Note</th><th id="approveColHead">Approve</th><th id="timeEditColHead"></th></tr></thead>
         <tbody id="timeTable"></tbody>
       </table></div></div>
     </div>
@@ -765,7 +765,7 @@ function renderJobs(filter=''){
   document.getElementById('jobEditCol').textContent=canEdit()?'Edit':'';
 
   const jobs=allJobs.filter(j=>j.status!=='quote'&&(!filter||[j.name,j.number,j.customer].some(v=>v?.toLowerCase().includes(filter))));
-  document.getElementById('jobsTable').innerHTML=jobs.length?jobs.map(j=>{
+  document.getElementById('jobsTable').innerHTML=jobs.length?jobs.slice().sort((a,b)=>(a.number||'').localeCompare(b.number||'',undefined,{numeric:true})).map(j=>{
     const co=allCompanies.find(c=>c.id===j.company_id);
     const ct=allContacts.find(c=>c.id===j.contact_id);
     const noteCount=allJobNotes.filter(n=>n.job_id===j.id).length;
@@ -885,7 +885,7 @@ async function submitNote(){
 // ── QUOTES ─────────────────────────────────────
 function renderQuotes(){
   const quotes=allJobs.filter(j=>j.status==='quote');
-  document.getElementById('quotesTable').innerHTML=quotes.length?quotes.map(j=>{
+  document.getElementById('quotesTable').innerHTML=quotes.length?quotes.slice().sort((a,b)=>(a.number||'').localeCompare(b.number||'',undefined,{numeric:true})).map(j=>{
     const co=allCompanies.find(c=>c.id===j.company_id);const ct=allContacts.find(c=>c.id===j.contact_id);
     const noteCount=allJobNotes.filter(n=>n.job_id===j.id).length;
     return `<tr class="hoverable">
@@ -1058,10 +1058,10 @@ function renderTime(){
   document.getElementById('approveColHead').style.display=isP?'':'none';
   document.getElementById('timeEditColHead').textContent=isOwner()?'Edit':'';
   const colSpan=isOwner()?9:isP?8:7;
-  document.getElementById('timeTable').innerHTML=entries.length?entries.map(t=>{
+  document.getElementById('timeTable').innerHTML=entries.length?entries.slice().sort((a,b)=>a.user_name.localeCompare(b.user_name)).map(t=>{
     const job=allJobs.find(j=>j.id===t.job_id);
     const hrs=t.clock_out?((t.clock_out-t.clock_in)/3600000).toFixed(2):null;
-    return `<tr class="hoverable"><td>${t.user_name}</td><td>${job?job.name:'-'}</td>
+    return `<tr class="hoverable"><td>${t.user_name}</td><td>${job?(job.number?job.number+' – ':'')+job.name:'-'}</td>
       <td>${t.process_name||'-'}</td><td>${fmtTime(t.clock_in)}</td>
       <td>${t.clock_out?fmtTime(t.clock_out):'<span class="clocked-in">● Active</span>'}</td>
       <td class="hours-cell">${hrs?hrs+'h':'-'}</td><td>${t.note||'-'}</td>
