@@ -74,6 +74,7 @@
   .badge-active{background:rgba(46,160,67,0.15);color:#4caf50;border:1px solid rgba(76,175,80,0.3);}
   .badge-quote{background:rgba(100,181,246,0.12);color:#64b5f6;border:1px solid rgba(100,181,246,0.3);}
   .badge-complete{background:rgba(232,160,32,0.12);color:var(--amber);border:1px solid rgba(232,160,32,0.3);}
+  .badge-finished-estimate{background:rgba(149,117,205,0.15);color:#b39ddb;border:1px solid rgba(149,117,205,0.3);}
   .badge-on-hold{background:rgba(150,150,150,0.12);color:#aaa;border:1px solid rgba(150,150,150,0.3);}
   .badge-owner{background:rgba(192,57,43,0.15);color:var(--red);border:1px solid rgba(192,57,43,0.3);}
   .badge-manager{background:rgba(100,181,246,0.12);color:#64b5f6;border:1px solid rgba(100,181,246,0.3);}
@@ -137,6 +138,7 @@
   .section{display:none;}
   .section.active{display:block;}
   .clocked-in{color:#4caf50;font-weight:600;}
+  .dup-clocked-in td{background:rgba(192,57,43,0.10)!important;}
   .hours-cell{font-family:'Barlow Condensed',sans-serif;font-size:1rem;font-weight:700;}
 
   /* PERMISSION BANNER */
@@ -336,9 +338,12 @@
   <nav>
     <button class="active" onclick="showSection('dashboard',this)">Dashboard</button>
     <button onclick="showSection('jobs',this)">Jobs</button>
+    <button onclick="showSection('completedJobs',this)" id="navCompletedJobs">Completed Jobs</button>
     <button onclick="showSection('quotes',this)" id="navQuotes">Quotes</button>
+    <button onclick="showSection('completedQuotes',this)" id="navCompletedQuotes">Finished Estimates</button>
     <button onclick="showSection('customers',this)" id="navCustomers">Customers</button>
     <button onclick="showSection('timesheet',this)">Timesheets</button>
+    <button onclick="showSection('approvedTime',this)" id="navApprovedTime">Approved Timesheets</button>
     <button onclick="showSection('reports',this)" id="navReports">Reports</button>
     <button onclick="showSection('team',this)" id="navTeam">Team</button>
   </nav>
@@ -366,12 +371,34 @@
       </table></div></div>
     </div>
 
+    <!-- COMPLETED JOBS -->
+    <div class="section" id="sec-completedJobs">
+      <div class="top-bar"><h2>Completed Jobs</h2>
+        <div class="top-bar-right">
+          <input class="search-box" placeholder="Search completed jobs…" oninput="filterCompletedJobs(this.value)">
+        </div>
+      </div>
+      <div class="card"><div class="table-wrap"><table>
+        <thead><tr><th></th><th>Job #</th><th>Name</th><th>Company</th><th>Contact</th><th>Project Mgr</th><th>Due Date</th><th>Status</th><th></th></tr></thead>
+        <tbody id="completedJobsTable"></tbody>
+      </table></div></div>
+    </div>
+
     <!-- QUOTES -->
     <div class="section" id="sec-quotes">
       <div class="top-bar"><h2>Quotes</h2><button class="btn btn-primary" onclick="openJobModal(true)">+ New Quote</button></div>
       <div class="card"><div class="table-wrap"><table>
         <thead><tr><th>Quote #</th><th>Name</th><th>Company</th><th>Contact</th><th>Project Mgr</th><th>Amount</th><th>Status</th><th></th></tr></thead>
         <tbody id="quotesTable"></tbody>
+      </table></div></div>
+    </div>
+
+    <!-- COMPLETED QUOTES / FINISHED ESTIMATES -->
+    <div class="section" id="sec-completedQuotes">
+      <div class="top-bar"><h2>Finished Estimates</h2></div>
+      <div class="card"><div class="table-wrap"><table>
+        <thead><tr><th>Quote #</th><th>Name</th><th>Company</th><th>Contact</th><th>Project Mgr</th><th>Amount</th><th>Status</th><th></th></tr></thead>
+        <tbody id="completedQuotesTable"></tbody>
       </table></div></div>
     </div>
 
@@ -403,6 +430,19 @@
       </table></div></div>
     </div>
 
+    <!-- APPROVED TIMESHEETS -->
+    <div class="section" id="sec-approvedTime">
+      <div class="top-bar"><h2>Approved Timesheets</h2>
+        <div class="top-bar-right">
+          <select id="approvedTimeFilterUser" class="search-box" style="width:160px" onchange="renderApprovedTime()"><option value="">All Employees</option></select>
+        </div>
+      </div>
+      <div class="card"><div class="table-wrap"><table>
+        <thead><tr><th>Employee</th><th>Job #</th><th>Process</th><th>Clock In</th><th>Clock Out</th><th>Hours</th><th>Note</th><th id="approvedUnapproveColHead">Unapprove</th><th id="approvedTimeEditColHead"></th></tr></thead>
+        <tbody id="approvedTimeTable"></tbody>
+      </table></div></div>
+    </div>
+
     <!-- REPORTS -->
     <div class="section" id="sec-reports">
       <div class="top-bar"><h2>Reports</h2></div>
@@ -425,7 +465,7 @@
         <div class="card-header"><h2>Jobs Report</h2></div>
         <div class="report-filters">
           <div class="form-group"><label>Status</label>
-            <select id="rJobStatus"><option value="">All</option><option value="active">Active</option><option value="quote">Quote</option><option value="complete">Complete</option><option value="on hold">On Hold</option></select>
+            <select id="rJobStatus"><option value="">All</option><option value="active">Active</option><option value="quote">Quote</option><option value="complete">Complete</option><option value="finished estimate">Finished Estimate</option><option value="on hold">On Hold</option></select>
           </div>
           <div class="form-group"><label>Company</label><select id="rJobCompany"><option value="">All Companies</option></select></div>
           <div style="display:flex;gap:8px;align-items:flex-end;padding-bottom:1px">
@@ -489,7 +529,7 @@
       <div class="form-group"><label>Job Contact</label><select id="jContact"><option value="">— Select Company First —</option></select></div>
       <div class="form-group"><label>Project Manager</label><input id="jPM" placeholder="Name"></div>
       <div class="form-group"><label>Status</label>
-        <select id="jStatus"><option value="active">Active</option><option value="quote">Quote</option><option value="complete">Complete</option><option value="on hold">On Hold</option></select>
+        <select id="jStatus"><option value="active">Active</option><option value="quote">Quote</option><option value="complete">Complete</option><option value="finished estimate">Finished Estimate</option><option value="on hold">On Hold</option></select>
       </div>
       <div class="form-group"><label>Due Date</label><input type="date" id="jDue"></div>
       <div class="form-group"><label>Quote / Contract Amount ($)</label><input type="number" id="jAmount" placeholder="0.00"></div>
@@ -565,6 +605,7 @@
     </div>
     <div class="form-group" style="margin-top:14px"><label>Process</label><div class="process-grid" id="processChips"></div><input type="hidden" id="clockProcessId"><input type="hidden" id="clockProcessName"></div>
     <div class="form-group" style="margin-top:14px"><label>Note (optional)</label><input id="clockNote" placeholder="Any additional notes…"></div>
+    <div id="clockOpenWarn" style="display:none;background:rgba(192,57,43,0.15);border:1px solid var(--red);color:var(--text);padding:10px 14px;border-radius:4px;margin-top:10px;font-size:0.85rem;"></div>
     <div class="form-actions">
       <button class="btn btn-primary" onclick="clockIn()">Clock In</button>
       <button class="btn btn-amber" onclick="clockOut()">Clock Out</button>
@@ -694,6 +735,8 @@ function enterApp(){
 function applyNavPermissions(){
   // Workers: hide Quotes, Customers, Reports nav
   document.getElementById('navQuotes').style.display=canEdit()?'':'none';
+  document.getElementById('navCompletedQuotes').style.display=canEdit()?'':'none';
+  document.getElementById('navApprovedTime').style.display=canEdit()?'':'none';
   document.getElementById('navCustomers').style.display=canEdit()?'':'none';
   document.getElementById('navReports').style.display=canEdit()?'':'none';
   document.getElementById('navTeam').style.display=canAdmin()?'':'none';
@@ -711,9 +754,9 @@ async function loadAll(){
       api('processes',{filter:'&order=sort_order'}),
       api('job_notes',{filter:'&order=created_at.desc'})
     ]);
-    renderDashboard();renderJobs();
-    if(canEdit()){renderQuotes();renderCustomers();}
-    renderTime();
+    renderDashboard();renderJobs();renderCompletedJobs();
+    if(canEdit()){renderQuotes();renderCompletedQuotes();renderCustomers();}
+    renderTime();renderApprovedTime();
     if(canEdit()){populateReportFilters();}
     if(canAdmin()){renderTeam();renderProcessList();}
     populateTimeFilter();
@@ -746,10 +789,14 @@ function renderDashboard(){
           <td><span class="badge badge-${(j.status||'active').replace(' ','-')}">${j.status||'active'}</span></td></tr>`;
       }).join('')}</tbody></table>`:'<div class="empty-state">No jobs yet</div>';
   const active=allTime.filter(t=>!t.clock_out);
+  const userCounts={};active.forEach(t=>{userCounts[t.user_id]=(userCounts[t.user_id]||0)+1;});
+  const dupUsers=new Set(Object.keys(userCounts).filter(k=>userCounts[k]>1));
   document.getElementById('clockedInNow').innerHTML=active.length
     ?`<table><thead><tr><th>Employee</th><th>Job</th><th>Process</th><th>Clocked In At</th></tr></thead><tbody>
       ${active.map(t=>{const job=allJobs.find(j=>j.id===t.job_id);
-        return `<tr><td class="clocked-in">${t.user_name}</td><td>${job?job.name:'-'}</td><td>${t.process_name||'-'}</td><td>${fmtTime(t.clock_in)}</td></tr>`;
+        const isDup=dupUsers.has(t.user_id);
+        const dupIcon=isDup?' <span style="color:var(--red)" title="Multiple open entries — please clean up">⚠</span>':'';
+        return `<tr${isDup?' class="dup-clocked-in"':''}><td class="clocked-in">${t.user_name}${dupIcon}</td><td>${job?job.name:'-'}</td><td>${t.process_name||'-'}</td><td>${fmtTime(t.clock_in)}</td></tr>`;
       }).join('')}</tbody></table>`:'<div class="empty-state">Nobody clocked in right now</div>';
 }
 
@@ -764,7 +811,7 @@ function renderJobs(filter=''){
   document.getElementById('btnNewJob').style.display=canEdit()?'':'none';
   document.getElementById('jobEditCol').textContent=canEdit()?'Edit':'';
 
-  const jobs=allJobs.filter(j=>j.status!=='quote'&&(!filter||[j.name,j.number,j.customer].some(v=>v?.toLowerCase().includes(filter))));
+  const jobs=allJobs.filter(j=>j.status!=='quote'&&j.status!=='complete'&&j.status!=='finished estimate'&&(!filter||[j.name,j.number,j.customer].some(v=>v?.toLowerCase().includes(filter))));
   document.getElementById('jobsTable').innerHTML=jobs.length?jobs.slice().sort((a,b)=>(a.number||'').localeCompare(b.number||'',undefined,{numeric:true})).map(j=>{
     const co=allCompanies.find(c=>c.id===j.company_id);
     const ct=allContacts.find(c=>c.id===j.contact_id);
@@ -783,6 +830,8 @@ function renderJobs(filter=''){
             <button class="btn btn-sm btn-blue" onclick="event.stopPropagation();openJobNotes('${j.id}')" style="margin-left:4px">
               📋 Notes${noteCount?` (${noteCount})`:''}
             </button>
+            <button class="btn btn-sm btn-ghost" onclick="event.stopPropagation();generateJobReport('${j.id}')" style="margin-left:4px">📄 Report</button>
+            ${canEdit()?`<button class="btn btn-sm btn-green" onclick="event.stopPropagation();markJobComplete('${j.id}')" style="margin-left:4px">✓ Complete</button>`:''}
         </td>
       </tr>
       <tr class="job-detail-row" id="jd-${j.id}" style="display:none">
@@ -820,6 +869,55 @@ function toggleJobDetail(id,row){
   row.classList.toggle('expanded',!isOpen);
 }
 function filterJobs(v){renderJobs(v.toLowerCase());}
+
+function renderCompletedJobs(filter=''){
+  const jobs=allJobs.filter(j=>j.status==='complete'&&(!filter||[j.name,j.number,j.customer].some(v=>v?.toLowerCase().includes(filter))));
+  document.getElementById('completedJobsTable').innerHTML=jobs.length?jobs.slice().sort((a,b)=>(a.number||'').localeCompare(b.number||'',undefined,{numeric:true})).map(j=>{
+    const co=allCompanies.find(c=>c.id===j.company_id);
+    const ct=allContacts.find(c=>c.id===j.contact_id);
+    const noteCount=allJobNotes.filter(n=>n.job_id===j.id).length;
+    return `
+      <tr class="job-row hoverable" onclick="toggleJobDetail('${j.id}',this)">
+        <td><span class="expand-icon">▶</span></td>
+        <td>${j.number||'-'}</td>
+        <td><strong>${j.name}</strong></td>
+        <td>${co?co.name:(j.customer||'-')}</td>
+        <td>${ct?ct.name:(j.customer_contact||'-')}</td>
+        <td>${j.project_manager||'-'}</td>
+        <td>${j.due_date||'-'}</td>
+        <td><span class="badge badge-${(j.status||'complete').replace(' ','-')}">${j.status||'complete'}</span></td>
+        <td><button class="btn btn-sm btn-blue" onclick="event.stopPropagation();openJobNotes('${j.id}')">📋 Notes${noteCount?` (${noteCount})`:''}</button>
+            <button class="btn btn-sm btn-ghost" onclick="event.stopPropagation();generateJobReport('${j.id}')" style="margin-left:4px">📄 Report</button>
+            ${canEdit()?`<button class="btn btn-sm btn-secondary" onclick="event.stopPropagation();reopenJob('${j.id}')" style="margin-left:4px">Reopen</button>`:''}
+        </td>
+      </tr>
+      <tr class="job-detail-row" id="jd-${j.id}" style="display:none">
+        <td colspan="9">
+          <div class="job-detail-inner">
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:12px;font-size:0.85rem">
+              <div><span style="color:var(--text-muted);font-size:0.72rem;text-transform:uppercase;letter-spacing:1px">Description</span><br>${j.description||'—'}</div>
+              ${canEdit()?`<div><span style="color:var(--text-muted);font-size:0.72rem;text-transform:uppercase;letter-spacing:1px">Contract Amount</span><br>${j.quote_amount?'$'+Number(j.quote_amount).toLocaleString():'—'}</div>`:''}
+              <div><span style="color:var(--text-muted);font-size:0.72rem;text-transform:uppercase;letter-spacing:1px">Hours Logged</span><br>${allTime.filter(t=>t.job_id===j.id&&t.clock_out).reduce((s,t)=>s+(t.clock_out-t.clock_in)/3600000,0).toFixed(1)}h</div>
+            </div>
+            ${renderJobNotesInline(j.id)}
+          </div>
+        </td>
+      </tr>`;
+  }).join(''):'<tr><td colspan="9" class="empty-state">No completed jobs</td></tr>';
+}
+function filterCompletedJobs(v){renderCompletedJobs(v.toLowerCase());}
+async function reopenJob(id){
+  if(!canEdit())return;
+  if(!confirm('Reopen this job and set its status back to Active?'))return;
+  try{await patch('jobs',id,{status:'active',is_job:true});await loadAll();}
+  catch(e){alert('Error reopening job: '+e.message);}
+}
+async function markJobComplete(id){
+  if(!canEdit())return;
+  if(!confirm('Mark this job as Complete?'))return;
+  try{await patch('jobs',id,{status:'complete'});await loadAll();}
+  catch(e){alert('Error updating job: '+e.message);}
+}
 
 // ── JOB NOTES MODAL ────────────────────────────
 function openJobNotes(jobId){
@@ -895,12 +993,46 @@ function renderQuotes(){
       <td>${canEdit()?(j.quote_amount?'$'+Number(j.quote_amount).toLocaleString():'-'):'—'}</td>
       <td><span class="badge badge-quote">Quote</span></td>
       <td>
-        ${canEdit()?`<button class="btn btn-sm btn-secondary" onclick="openJobModal(true,'${j.id}')">Edit</button>`:''}
-        <button class="btn btn-sm btn-blue" onclick="openJobNotes('${j.id}')" style="margin-left:4px">
+        ${canEdit()?`<button class="btn btn-sm btn-secondary" onclick="event.stopPropagation();openJobModal(true,'${j.id}')">Edit</button>`:''}
+        <button class="btn btn-sm btn-blue" onclick="event.stopPropagation();openJobNotes('${j.id}')" style="margin-left:4px">
           📋 Notes${noteCount?` (${noteCount})`:''}
         </button>
+        ${canEdit()?`<button class="btn btn-sm btn-green" onclick="event.stopPropagation();markQuoteFinished('${j.id}')" style="margin-left:4px">✓ Finish Estimate</button>`:''}
       </td></tr>`;
   }).join(''):'<tr><td colspan="8" class="empty-state">No quotes</td></tr>';
+}
+
+function renderCompletedQuotes(){
+  const quotes=allJobs.filter(j=>j.status==='finished estimate');
+  document.getElementById('completedQuotesTable').innerHTML=quotes.length?quotes.slice().sort((a,b)=>(a.number||'').localeCompare(b.number||'',undefined,{numeric:true})).map(j=>{
+    const co=allCompanies.find(c=>c.id===j.company_id);const ct=allContacts.find(c=>c.id===j.contact_id);
+    const noteCount=allJobNotes.filter(n=>n.job_id===j.id).length;
+    return `<tr class="hoverable">
+      <td>${j.number||'-'}</td><td><strong>${j.name}</strong></td>
+      <td>${co?co.name:(j.customer||'-')}</td><td>${ct?ct.name:(j.customer_contact||'-')}</td>
+      <td>${j.project_manager||'-'}</td>
+      <td>${canEdit()?(j.quote_amount?'$'+Number(j.quote_amount).toLocaleString():'-'):'—'}</td>
+      <td><span class="badge badge-finished-estimate">Finished Estimate</span></td>
+      <td>
+        ${canEdit()?`<button class="btn btn-sm btn-secondary" onclick="event.stopPropagation();openJobModal(true,'${j.id}')">Edit</button>`:''}
+        <button class="btn btn-sm btn-blue" onclick="event.stopPropagation();openJobNotes('${j.id}')" style="margin-left:4px">
+          📋 Notes${noteCount?` (${noteCount})`:''}
+        </button>
+        ${canEdit()?`<button class="btn btn-sm btn-secondary" onclick="event.stopPropagation();reopenQuote('${j.id}')" style="margin-left:4px">Reopen</button>`:''}
+      </td></tr>`;
+  }).join(''):'<tr><td colspan="8" class="empty-state">No finished estimates</td></tr>';
+}
+async function reopenQuote(id){
+  if(!canEdit())return;
+  if(!confirm('Reopen this estimate and set its status back to Quote?'))return;
+  try{await patch('jobs',id,{status:'quote',is_job:false});await loadAll();}
+  catch(e){alert('Error reopening estimate: '+e.message);}
+}
+async function markQuoteFinished(id){
+  if(!canEdit())return;
+  if(!confirm('Mark this quote as Finished Estimate?'))return;
+  try{await patch('jobs',id,{status:'finished estimate'});await loadAll();}
+  catch(e){alert('Error updating quote: '+e.message);}
 }
 
 // ── JOB MODAL ──────────────────────────────────
@@ -1049,12 +1181,19 @@ function populateTimeFilter(){
   const opts=canEdit()?allUsers:[currentUser];
   sel.innerHTML='<option value="">All Employees</option>'+opts.map(u=>`<option value="${u.id}"${u.id===cur?' selected':''}>${u.name}</option>`).join('');
   if(isWorker())sel.value=currentUser.id;
+  const sel2=document.getElementById('approvedTimeFilterUser');
+  if(sel2){
+    const cur2=sel2.value;
+    sel2.innerHTML='<option value="">All Employees</option>'+opts.map(u=>`<option value="${u.id}"${u.id===cur2?' selected':''}>${u.name}</option>`).join('');
+    if(isWorker())sel2.value=currentUser.id;
+  }
 }
 function renderTime(){
   const fid=document.getElementById('timeFilterUser')?.value||'';
   const isP=canEdit();
   let entries=fid?allTime.filter(t=>t.user_id===fid):allTime;
   if(isWorker())entries=entries.filter(t=>t.user_id===currentUser.id);
+  entries=entries.filter(t=>t.approved!==true);
   document.getElementById('approveColHead').style.display=isP?'':'none';
   document.getElementById('timeEditColHead').textContent=isOwner()?'Edit':'';
   const colSpan=isOwner()?9:isP?8:7;
@@ -1071,6 +1210,29 @@ function renderTime(){
   }).join(''):`<tr><td colspan="${colSpan}" class="empty-state">No time entries</td></tr>`;
 }
 async function approveTime(id){if(!canEdit())return;await patch('time_entries',id,{approved:true});await loadAll();}
+
+function renderApprovedTime(){
+  const fid=document.getElementById('approvedTimeFilterUser')?.value||'';
+  const isP=canEdit();
+  let entries=fid?allTime.filter(t=>t.user_id===fid):allTime;
+  if(isWorker())entries=entries.filter(t=>t.user_id===currentUser.id);
+  entries=entries.filter(t=>t.approved===true);
+  document.getElementById('approvedUnapproveColHead').style.display=isP?'':'none';
+  document.getElementById('approvedTimeEditColHead').textContent=isOwner()?'Edit':'';
+  const colSpan=isOwner()?9:isP?8:7;
+  document.getElementById('approvedTimeTable').innerHTML=entries.length?entries.slice().sort((a,b)=>a.user_name.localeCompare(b.user_name)).map(t=>{
+    const job=allJobs.find(j=>j.id===t.job_id);
+    const hrs=t.clock_out?((t.clock_out-t.clock_in)/3600000).toFixed(2):null;
+    return `<tr class="hoverable"><td>${t.user_name}</td><td>${job?(job.number?job.number+' – ':'')+job.name:'-'}</td>
+      <td>${t.process_name||'-'}</td><td>${fmtTime(t.clock_in)}</td>
+      <td>${t.clock_out?fmtTime(t.clock_out):'<span class="clocked-in">● Active</span>'}</td>
+      <td class="hours-cell">${hrs?hrs+'h':'-'}</td><td>${t.note||'-'}</td>
+      ${isP?`<td><button class="btn btn-sm btn-secondary" onclick="unapproveTime('${t.id}')">Unapprove</button></td>`:''}
+      ${isOwner()?`<td><button class="btn btn-sm btn-secondary" onclick="openTimeEditModal('${t.id}')">Edit</button></td>`:''}
+    </tr>`;
+  }).join(''):`<tr><td colspan="${colSpan}" class="empty-state">No approved time entries</td></tr>`;
+}
+async function unapproveTime(id){if(!canEdit())return;await patch('time_entries',id,{approved:false});await loadAll();}
 
 let editingTimeId=null;
 function toLocalDatetimeInput(ms){
@@ -1115,6 +1277,15 @@ async function saveTimeEntry(){
     approved:document.getElementById('teApproved').value==='true'
   };
   try{
+    if(clockOut===null){
+      const other=allTime.find(t=>t.id!==editingTimeId&&t.user_id===uid&&!t.clock_out);
+      if(other){
+        const job=allJobs.find(j=>j.id===other.job_id);
+        const jobLabel=job?`${job.number?job.number+' – ':''}${job.name}`:'another job';
+        alert(`Cannot save: ${u.name} already has an open time entry on ${jobLabel} (clocked in ${fmtTime(other.clock_in)}). Close that entry first.`);
+        return;
+      }
+    }
     await patch('time_entries',editingTimeId,body);
     closeModal('timeEditModal');await loadAll();
   }catch(e){alert('Error saving time entry: '+e.message);}
@@ -1136,14 +1307,43 @@ function openClockModal(){
   document.getElementById('clockProcessId').value='';document.getElementById('clockProcessName').value='';
   const active=allProcesses.filter(p=>p.active!==false);
   document.getElementById('processChips').innerHTML=active.map(p=>`<div class="process-chip" onclick="selectProcess('${p.id}','${p.name}',this)">${p.name}</div>`).join('');
+  document.getElementById('clockUser').onchange=refreshClockOpenWarn;
+  refreshClockOpenWarn();
   document.getElementById('clockModal').classList.add('open');
+}
+function refreshClockOpenWarn(){
+  const sel=document.getElementById('clockUser');
+  const warn=document.getElementById('clockOpenWarn');
+  if(!sel||!warn)return;
+  const uid=sel.value;
+  const u=allUsers.find(x=>x.id===uid);
+  const name=u?u.name:'This employee';
+  const open=uid?allTime.find(t=>t.user_id===uid&&!t.clock_out):null;
+  const clockInBtn=Array.from(document.querySelectorAll('#clockModal button')).find(b=>b.textContent.trim()==='Clock In');
+  if(open){
+    const job=allJobs.find(j=>j.id===open.job_id);
+    const jobLabel=job?`${job.number?job.number+' – ':''}${job.name}`:'another job';
+    warn.style.display='block';
+    warn.textContent=`⚠ ${name} is already clocked into ${jobLabel} since ${fmtTime(open.clock_in)}. Use Clock Out to close that entry first.`;
+    if(clockInBtn){clockInBtn.disabled=true;clockInBtn.style.opacity='0.5';}
+  }else{
+    warn.style.display='none';
+    warn.textContent='';
+    if(clockInBtn){clockInBtn.disabled=false;clockInBtn.style.opacity='';}
+  }
 }
 function selectProcess(id,name,el){document.querySelectorAll('.process-chip').forEach(c=>c.classList.remove('selected'));el.classList.add('selected');document.getElementById('clockProcessId').value=id;document.getElementById('clockProcessName').value=name;}
 async function clockIn(){
   const uid=document.getElementById('clockUser').value,jid=document.getElementById('clockJob').value;
   if(!uid||!jid){alert('Please select employee and job');return;}
   const u=allUsers.find(x=>x.id===uid);
-  if(allTime.find(t=>t.user_id===uid&&!t.clock_out)){alert(`${u.name} is already clocked in!`);return;}
+  const openEntry=allTime.find(t=>t.user_id===uid&&!t.clock_out);
+  if(openEntry){
+    const job=allJobs.find(j=>j.id===openEntry.job_id);
+    const jobLabel=job?`${job.number?job.number+' – ':''}${job.name}`:'another job';
+    alert(`${u.name} is already clocked into ${jobLabel} (since ${fmtTime(openEntry.clock_in)}). Please clock them out before starting a new job.`);
+    return;
+  }
   try{
     await api('time_entries',{method:'POST',body:{id:crypto.randomUUID(),job_id:jid,user_id:uid,user_name:u.name,clock_in:Date.now(),
       process_id:document.getElementById('clockProcessId').value||null,
@@ -1341,6 +1541,160 @@ function exportJobNotesReport(){exportToCSV(getJobNotesData(),`JM_Steel_JobNotes
 function exportCustomersReport(){exportToCSV(getCustomersData(),`JM_Steel_Customers_${today()}.csv`);}
 function exportProcessReport(){exportToCSV(getProcessData(),`JM_Steel_ProcessSummary_${today()}.csv`);}
 function today(){return new Date().toISOString().slice(0,10);}
+
+// ── PER-JOB REPORT ─────────────────────────────
+function escapeHtml(s){
+  if(s===null||s===undefined)return'';
+  return String(s).replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+}
+function generateJobReport(id){
+  const j=allJobs.find(x=>x.id===id);
+  if(!j){alert('Job not found');return;}
+  const co=allCompanies.find(c=>c.id===j.company_id);
+  const ct=allContacts.find(c=>c.id===j.contact_id);
+  const entries=allTime.filter(t=>t.job_id===id);
+  const notes=allJobNotes.filter(n=>n.job_id===id).slice().sort((a,b)=>(a.created_at||0)-(b.created_at||0));
+
+  let totalHours=0;
+  const byEmployee={};
+  const byProcess={};
+  entries.forEach(t=>{
+    if(!t.clock_out)return;
+    const hrs=(t.clock_out-t.clock_in)/3600000;
+    totalHours+=hrs;
+    const emp=t.user_name||'Unknown';
+    byEmployee[emp]=(byEmployee[emp]||0)+hrs;
+    const proc=t.process_name||'Unspecified';
+    byProcess[proc]=(byProcess[proc]||0)+hrs;
+  });
+  const empRows=Object.entries(byEmployee).sort((a,b)=>b[1]-a[1]);
+  const procRows=Object.entries(byProcess).sort((a,b)=>b[1]-a[1]);
+
+  const status=j.status||'active';
+  const badgeClass='badge-'+status.replace(' ','-');
+  const coName=co?co.name:(j.customer||'—');
+  const ctName=ct?ct.name:(j.customer_contact||'—');
+  const amount=j.quote_amount?'$'+Number(j.quote_amount).toLocaleString():'—';
+  const generatedAt=new Date().toLocaleString();
+
+  const entriesRows=entries.slice().sort((a,b)=>(a.clock_in||0)-(b.clock_in||0)).map(t=>{
+    const hrs=t.clock_out?((t.clock_out-t.clock_in)/3600000).toFixed(2):'—';
+    return `<tr>
+      <td>${escapeHtml(t.user_name||'-')}</td>
+      <td>${escapeHtml(t.process_name||'-')}</td>
+      <td>${escapeHtml(fmtTime(t.clock_in))}</td>
+      <td>${t.clock_out?escapeHtml(fmtTime(t.clock_out)):'Active'}</td>
+      <td>${hrs}</td>
+      <td>${escapeHtml(t.note||'')}</td>
+      <td>${t.approved?'Yes':'No'}</td>
+    </tr>`;
+  }).join('');
+
+  const notesHtml=notes.length?notes.map(n=>`
+    <div class="note-card">
+      <div class="note-meta"><strong>${escapeHtml(n.user_name||'-')}</strong> &middot; ${escapeHtml(fmtTime(n.created_at))}</div>
+      ${n.note?`<div class="note-body">${escapeHtml(n.note)}</div>`:''}
+      ${n.photo_url?`<div class="note-img"><img src="${escapeHtml(n.photo_url)}" alt="Note photo"></div>`:''}
+    </div>`).join(''):'<div class="empty">No notes or photos for this job yet.</div>';
+
+  const html=`<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><title>Job Report — ${escapeHtml(j.name||'')}</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;900&display=swap" rel="stylesheet">
+<style>
+  body{font-family:Arial,sans-serif;color:#000;background:#fff;padding:24px;max-width:900px;margin:0 auto;}
+  h1,h2,h3{font-family:'Barlow Condensed',Arial,sans-serif;letter-spacing:1px;}
+  h1{font-size:1.6rem;margin-bottom:4px;}
+  h2{font-size:1.15rem;margin:18px 0 8px;border-bottom:1px solid #999;padding-bottom:4px;}
+  .toolbar{display:flex;gap:8px;margin-bottom:18px;}
+  .toolbar button{padding:8px 16px;font-size:14px;border:1px solid #444;background:#eee;cursor:pointer;border-radius:3px;}
+  .toolbar button:hover{background:#ddd;}
+  .brand{font-size:0.9rem;color:#555;text-transform:uppercase;letter-spacing:2px;margin-bottom:2px;}
+  .job-title{font-family:'Barlow Condensed',Arial,sans-serif;font-size:2rem;font-weight:900;margin:2px 0 4px;}
+  .meta-line{font-size:0.9rem;color:#333;margin-bottom:14px;}
+  .badge{display:inline-block;padding:2px 8px;border:1px solid #666;border-radius:2px;font-size:0.72rem;text-transform:uppercase;letter-spacing:1px;font-weight:700;margin-left:6px;}
+  .info-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px 20px;font-size:13px;margin-bottom:14px;}
+  .info-grid .lbl{color:#666;text-transform:uppercase;font-size:11px;letter-spacing:1px;font-weight:700;}
+  .info-grid .val{margin-bottom:6px;}
+  .total-hours{font-family:'Barlow Condensed',Arial,sans-serif;font-size:2.2rem;font-weight:900;margin:6px 0 12px;}
+  table{width:100%;border-collapse:collapse;margin-bottom:14px;}
+  th,td{border:1px solid #999;padding:6px 10px;text-align:left;font-size:13px;}
+  th{background:#f0f0f0;}
+  section{page-break-inside:avoid;margin-bottom:18px;}
+  .two-col{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+  .note-card{border:1px solid #bbb;border-radius:4px;padding:10px 14px;margin-bottom:10px;page-break-inside:avoid;}
+  .note-meta{font-size:12px;color:#555;margin-bottom:4px;}
+  .note-body{font-size:13px;line-height:1.5;margin-bottom:6px;white-space:pre-wrap;}
+  .note-img img{max-width:400px;max-height:300px;border:1px solid #ccc;border-radius:4px;}
+  .empty{color:#888;font-style:italic;padding:8px 0;}
+  @media print { .no-print{display:none;} body{padding:0;} }
+</style></head><body>
+<div class="toolbar no-print">
+  <button onclick="window.print()">🖨 Print / Save as PDF</button>
+  <button onclick="window.close()">Close</button>
+</div>
+
+<section>
+  <div class="brand">J&amp;M Steel — Job Report</div>
+  <div class="job-title">${escapeHtml(j.number||'')}${j.number?' — ':''}${escapeHtml(j.name||'')}</div>
+  <div class="meta-line">
+    ${j.po_number?`<strong>PO #</strong> ${escapeHtml(j.po_number)} &nbsp;`:''}
+    <span class="badge">${escapeHtml(status)}</span>
+    &nbsp; Generated ${escapeHtml(generatedAt)}
+  </div>
+</section>
+
+<section>
+  <h2>Job Info</h2>
+  <div class="info-grid">
+    <div><div class="lbl">Company</div><div class="val">${escapeHtml(coName)}</div></div>
+    <div><div class="lbl">Contact</div><div class="val">${escapeHtml(ctName)}</div></div>
+    <div><div class="lbl">Project Manager</div><div class="val">${escapeHtml(j.project_manager||'—')}</div></div>
+    <div><div class="lbl">Due Date</div><div class="val">${escapeHtml(j.due_date||'—')}</div></div>
+    <div><div class="lbl">Status</div><div class="val">${escapeHtml(status)}</div></div>
+    <div><div class="lbl">Quote / Contract Amount</div><div class="val">${escapeHtml(amount)}</div></div>
+    <div style="grid-column:1 / -1"><div class="lbl">Description</div><div class="val">${escapeHtml(j.description||'—')}</div></div>
+  </div>
+</section>
+
+<section>
+  <h2>Hours Summary</h2>
+  <div class="lbl" style="color:#666;text-transform:uppercase;font-size:11px;letter-spacing:1px;font-weight:700">Total Hours</div>
+  <div class="total-hours">${totalHours.toFixed(2)}h</div>
+  <div class="two-col">
+    <div>
+      <h3 style="font-size:1rem;margin:0 0 6px">Hours by Employee</h3>
+      <table><thead><tr><th>Employee</th><th>Hours</th></tr></thead><tbody>
+      ${empRows.length?empRows.map(([n,h])=>`<tr><td>${escapeHtml(n)}</td><td>${h.toFixed(2)}</td></tr>`).join(''):'<tr><td colspan="2" class="empty">No hours logged</td></tr>'}
+      </tbody></table>
+    </div>
+    <div>
+      <h3 style="font-size:1rem;margin:0 0 6px">Hours by Process</h3>
+      <table><thead><tr><th>Process</th><th>Hours</th></tr></thead><tbody>
+      ${procRows.length?procRows.map(([n,h])=>`<tr><td>${escapeHtml(n)}</td><td>${h.toFixed(2)}</td></tr>`).join(''):'<tr><td colspan="2" class="empty">No hours logged</td></tr>'}
+      </tbody></table>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2>Full Time Entries</h2>
+  <table><thead><tr><th>Employee</th><th>Process</th><th>Clock In</th><th>Clock Out</th><th>Hours</th><th>Note</th><th>Approved</th></tr></thead>
+  <tbody>${entriesRows||'<tr><td colspan="7" class="empty">No time entries</td></tr>'}</tbody></table>
+</section>
+
+<section>
+  <h2>Notes &amp; Photos</h2>
+  ${notesHtml}
+</section>
+
+</body></html>`;
+
+  const w=window.open('','_blank');
+  if(!w){alert('Popup blocked. Please allow popups for this site to view the report.');return;}
+  w.document.write(html);
+  w.document.close();
+}
+
 
 // ── INIT ───────────────────────────────────────
 loadUsers();
