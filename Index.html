@@ -676,18 +676,24 @@
 const SUPABASE_URL='https://pmoxtjyrpglaysrdmpvk.supabase.co';
 const SUPABASE_KEY='sb_publishable_rtdKnLGr2bod1u_zj_jkHA_9aQJqG7w';
 
+function sbHeaders(extra){const s=(()=>{try{return JSON.parse(localStorage.getItem('jm_session')||'null')}catch(_){return null}})();const h={'apikey':SUPABASE_KEY,'Authorization':`Bearer ${SUPABASE_KEY}`,'Content-Type':'application/json','Prefer':'return=representation'};if(s&&s.userId&&s.token){h['x-jm-user-id']=s.userId;h['x-jm-token']=s.token;}return Object.assign(h,extra||{});}
 const api=async(table,opts={})=>{
   const{method='GET',filter='',body,select='*'}=opts;
   const url=`${SUPABASE_URL}/rest/v1/${table}?select=${select}${filter}`;
-  const res=await fetch(url,{method,headers:{'apikey':SUPABASE_KEY,'Authorization':`Bearer ${SUPABASE_KEY}`,'Content-Type':'application/json','Prefer':(method==='POST'||method==='PATCH')?'return=representation':''},body:body?JSON.stringify(body):undefined});
+  const res=await fetch(url,{method,headers:sbHeaders(),body:body?JSON.stringify(body):undefined});
   if(!res.ok){const e=await res.text();throw new Error(e);}
   const t=await res.text();return t?JSON.parse(t):[];
 };
 const patch=async(table,id,body)=>{
-  const res=await fetch(`${SUPABASE_URL}/rest/v1/${table}?id=eq.${id}`,{method:'PATCH',headers:{'apikey':SUPABASE_KEY,'Authorization':`Bearer ${SUPABASE_KEY}`,'Content-Type':'application/json','Prefer':'return=representation'},body:JSON.stringify(body)});
+  const res=await fetch(`${SUPABASE_URL}/rest/v1/${table}?id=eq.${id}`,{method:'PATCH',headers:sbHeaders(),body:JSON.stringify(body)});
   if(!res.ok)throw new Error(await res.text());
 };
-const del=async(table,id)=>{await fetch(`${SUPABASE_URL}/rest/v1/${table}?id=eq.${id}`,{method:'DELETE',headers:{'apikey':SUPABASE_KEY,'Authorization':`Bearer ${SUPABASE_KEY}`}});};
+const del=async(table,id)=>{const res=await fetch(`${SUPABASE_URL}/rest/v1/${table}?id=eq.${id}`,{method:'DELETE',headers:sbHeaders()});if(!res.ok)throw new Error(await res.text());};
+async function sbIssueSession(userId,pin){
+  const res=await fetch(`${SUPABASE_URL}/rest/v1/rpc/issue_session`,{method:'POST',headers:{'apikey':SUPABASE_KEY,'Authorization':`Bearer ${SUPABASE_KEY}`,'Content-Type':'application/json'},body:JSON.stringify({p_user_id:userId,p_pin:String(pin)})});
+  if(!res.ok){throw new Error(await res.text());}
+  const t=await res.text();return t?JSON.parse(t):null;
+}
 
 // STATE
 let currentUser=null,selectedUserId=null,pinEntered='';
@@ -707,7 +713,7 @@ const canAdmin=()=>isOwner();                          // team management only
 // ── LOGIN ──────────────────────────────────────
 async function loadUsers(){
   try{
-    allUsers=await api('users',{filter:'&order=name'});
+    allUsers=await api('users_public',{filter:'&order=name'});
     const list=document.getElementById('userList');
     if(!allUsers.length){list.innerHTML='<p style="color:var(--text-muted)">No users found.</p>';return;}
     list.innerHTML='';
@@ -722,8 +728,16 @@ function pinClear(){pinEntered='';updatePinDisplay();}
 async function verifyPin(){
   const u=allUsers.find(x=>x.id===selectedUserId);if(!u)return;
   if(!pinEntered){document.getElementById('pinError').textContent='Please enter your PIN.';return;}
-  if(String(pinEntered)===String(u.pin)){currentUser=u;enterApp();}
-  else{document.getElementById('pinError').textContent='Incorrect PIN — try again.';setTimeout(()=>{pinEntered='';updatePinDisplay();document.getElementById('pinError').textContent='';},1200);}
+  let token=null;
+  try{ token = await sbIssueSession(u.id, pinEntered); }
+  catch(err){ document.getElementById('pinError').textContent='Sign-in failed. Please try again.'; pinEntered=''; updatePinDisplay(); setTimeout(()=>{document.getElementById('pinError').textContent='';},1500); return; }
+  if(token){
+    try{ localStorage.setItem('jm_session', JSON.stringify({userId:u.id, token:token})); }catch(_){}
+    currentUser=u; enterApp();
+  } else {
+    document.getElementById('pinError').textContent='Incorrect PIN';pinEntered='';updatePinDisplay();
+    setTimeout(()=>{document.getElementById('pinError').textContent='';},1200);
+  }
 }
 function enterApp(){
   document.getElementById('loginScreen').style.display='none';
@@ -741,7 +755,7 @@ function applyNavPermissions(){
   document.getElementById('navReports').style.display=canEdit()?'':'none';
   document.getElementById('navTeam').style.display=canAdmin()?'':'none';
 }
-function logout(){currentUser=null;selectedUserId=null;pinEntered='';document.getElementById('app').style.display='none';document.getElementById('loginScreen').style.display='flex';document.getElementById('pinArea').style.display='none';document.querySelectorAll('.userBtn').forEach(b=>b.classList.remove('selected'));}
+function logout(){try{localStorage.removeItem('jm_session');}catch(_){}currentUser=null;selectedUserId=null;pinEntered='';document.getElementById('app').style.display='none';document.getElementById('loginScreen').style.display='flex';document.getElementById('pinArea').style.display='none';document.querySelectorAll('.userBtn').forEach(b=>b.classList.remove('selected'));}
 
 // ── LOAD ALL ───────────────────────────────────
 async function loadAll(){
@@ -1414,13 +1428,13 @@ async function saveUser(){
   try{
     if(editingUserId){await patch('users',editingUserId,body);}
     else{body.id=crypto.randomUUID();await api('users',{method:'POST',body});}
-    closeModal('userModal');allUsers=await api('users',{filter:'&order=name'});renderTeam();
+    closeModal('userModal');allUsers=await api('users_public',{filter:'&order=name'});renderTeam();
   }catch(e){alert('Error saving: '+e.message);}
 }
 async function deleteUser(){
   if(!canAdmin())return;
   const u=allUsers.find(x=>x.id===editingUserId);if(!confirm(`Remove ${u.name}?`))return;
-  await del('users',editingUserId);closeModal('userModal');allUsers=await api('users',{filter:'&order=name'});renderTeam();
+  await del('users',editingUserId);closeModal('userModal');allUsers=await api('users_public',{filter:'&order=name'});renderTeam();
 }
 function closeModal(id){document.getElementById(id).classList.remove('open');}
 
